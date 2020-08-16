@@ -18,15 +18,6 @@ export type Manager<Input extends PlainObject, Data extends PlainObject> = {
   data: Data
 }
 
-// todo allow env vars to populate settings
-// todo track env var as value source
-// todo $initial magic var to reset settting to its original state, re-running
-// dynamic initializers if necessary
-// todo run initial through fixup in dev to be safer
-// todo run initial through validation in dev to be safer
-// todo should onFixup be replaced with a batch version of onfixups that gets
-// called with all fixups that happened for all of the input?
-
 export type Options = {
   /**
    * Handle fixup events.

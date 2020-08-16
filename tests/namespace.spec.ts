@@ -2,6 +2,25 @@ import * as tst from 'typescript-test-utils'
 import * as S from '../src'
 import { c } from './__helpers'
 
+describe('specifier', () => {
+  it('can be omitted when input+data is optional', () => {
+    const s2 = S.create<{ a?: { b?: number } }, { a?: { b?: number } }>({ fields: {} })
+    s2.change({ a: { b: 2 } })
+    expect(s2.data).toEqual({ a: { b: 2 } })
+  })
+})
+
+describe('Well known classes do not get counted as namespace', () => {
+  it('regexp', () => {
+    S.create<{ a?: { b?: string | RegExp } }>({ fields: { a: { fields: { b: { initial: () => /a/ } } } } })
+  })
+  it('Date', () => {
+    S.create<{ a?: { b?: string | Date } }>({
+      fields: { a: { fields: { b: { initial: () => new Date() } } } },
+    })
+  })
+})
+
 describe('static errors', () => {
   it('a field requires an initializer if the input is optional', () => {
     S.create<{ a?: { b?: 1 } }>({ fields: { a: { fields: { b: { initial: c(1) } } } } })

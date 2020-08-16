@@ -5,9 +5,9 @@ import { Primitive } from 'type-fest'
 import { inspect } from 'util'
 import type { Options } from './manager'
 import { Fixup, MapType, Shorthand, Validate } from './static'
-import { IsRecord, Lookup, PlainObject } from './utils'
+import { IsRecord, Lookup, mergeShallow, PlainObject } from './utils'
 
-const log = Logger.log.child('settings')
+const log = Logger.log.child('setset')
 
 /**
  * Metadata
@@ -418,10 +418,6 @@ function doCommit(
 
   log.trace('committing leaf', { key, input, parentData, metadataLeaf })
   parentData[key] = input
-  // todo why can the metadata be undefined?
-  // if (mdata[key] === undefined) {
-  //   mdata[key] = createMetadataLeaf(input, metadataFrom)
-  // }
   metadataLeaf.value = input
   metadataLeaf.from = metadataFrom
   if (metadataFrom === 'initial') {
@@ -758,15 +754,6 @@ export function appendPath(info: TraversalInfo, newPart: string | string[]): Tra
 
 export function createInfo(): TraversalInfo {
   return { path: ['__root__'] }
-}
-
-function mergeShallow(o1: any, o2: any) {
-  for (const [k, v] of Object.entries(o2)) {
-    if (v !== undefined) {
-      o1[k] = v
-    }
-  }
-  return o1
 }
 
 /**

@@ -2,7 +2,7 @@ import { log } from '@nexus/logger'
 import dedent from 'dedent'
 import * as tst from 'typescript-test-utils'
 import * as S from '../src'
-import { c, R } from './__helpers'
+import { c } from './__helpers'
 
 describe('change', () => {
   it('.data reflects the change', () => {
@@ -46,15 +46,6 @@ describe('specifiers', () => {
     it('can still be provided too', () => {
       const s = S.create<{ a: number }, { a?: number }>({ fields: { a: {} } })
       expect(s.data.a).toBeUndefined()
-    })
-    // todo move to namespace/record test suites
-    it('can be omitted when input+data is optional', () => {
-      const s2 = S.create<{ a?: { b?: number } }, { a?: { b?: number } }>({ fields: {} })
-      s2.change({ a: { b: 2 } })
-      expect(s2.data).toEqual({ a: { b: 2 } })
-      const s3 = S.create<{ a?: R<{ b?: number }> }, { a?: R<{ b?: number }> }>({ fields: {} })
-      s3.change({ a: { foobar: { b: 2 } } })
-      expect(s3.data).toEqual({ a: { foobar: { b: 2 } } })
     })
   })
 })

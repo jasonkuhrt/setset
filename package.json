@@ -11,6 +11,7 @@
   "scripts": {
     "format": "prettier --write .",
     "dev": "tsc --build --watch",
+    "dev:test": "yarn test --coverage --watch-all",
     "build": "tsc",
     "test": "jest",
     "clean": "rm -rf dist",

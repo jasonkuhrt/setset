@@ -92,3 +92,12 @@ export type Includes<T, U> = (T extends U ? T : never) extends never ? false : t
 export type ExcludePrimitive<T> = Exclude<T, Primitive>
 
 export function assertTypeEquals<T>(expression: T): void {}
+
+export function mergeShallow(o1: any, o2: any) {
+  for (const [k, v] of Object.entries(o2)) {
+    if (v !== undefined) {
+      o1[k] = v
+    }
+  }
+  return o1
+}

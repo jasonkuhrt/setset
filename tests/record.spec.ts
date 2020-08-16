@@ -1,6 +1,14 @@
 import * as S from '../src'
 import { R } from './__helpers'
 
+describe('specifiers', () => {
+  it('can be omitted when input+data is optional', () => {
+    const s3 = S.create<{ a?: R<{ b?: number }> }, { a?: R<{ b?: number }> }>({ fields: {} })
+    s3.change({ a: { foobar: { b: 2 } } })
+    expect(s3.data).toEqual({ a: { foobar: { b: 2 } } })
+  })
+})
+
 it('can have their settings changed', () => {
   const s = S.create<{ a: R<{ b: number }> }>({ fields: { a: { entry: { fields: { b: {} } } } } })
   expect(s.change({ a: { foobar: { b: 2 } } }).data).toEqual({ a: { foobar: { b: 2 } } })
