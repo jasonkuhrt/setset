@@ -1,0 +1,229 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`initial() is accepted and is called (optional record case) 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`initial() is accepted and is called (required record case) 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`initial() metadata captures immutable initial state even with sub-initializers 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+            "c": Object {
+              "from": "initial",
+              "initial": 1,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+            "c": Object {
+              "from": "initial",
+              "initial": 1,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`initial() metadata captures immutable initial state even with sub-initializers 2`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+            "c": Object {
+              "from": "initial",
+              "initial": 1,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "initial",
+              "initial": 2,
+              "type": "leaf",
+              "value": 2,
+            },
+            "c": Object {
+              "from": "set",
+              "initial": 1,
+              "type": "leaf",
+              "value": 3,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`mapEntryData metadata considers source of contribution as being "initial" (instead of e.g. "set") and immutable as usual 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {
+        "foobar": Object {
+          "fields": Object {
+            "a": Object {
+              "from": "initial",
+              "initial": 1,
+              "type": "leaf",
+              "value": 1,
+            },
+            "b": Object {
+              "from": "initial",
+              "initial": 1,
+              "isShadow": true,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "a": Object {
+              "from": "initial",
+              "initial": 1,
+              "type": "leaf",
+              "value": 1,
+            },
+            "b": Object {
+              "from": "initial",
+              "initial": 1,
+              "isShadow": true,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;

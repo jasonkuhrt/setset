@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`fixup() a namespace with shorthand runs through fixups too 1`] = `
+Array [
+  Array [
+    Object {
+      "after": 1,
+      "before": 2,
+      "messages": Array [
+        "must be 1, was 2",
+      ],
+      "name": "a.a",
+    },
+    [Function],
+  ],
+]
+`;
+
+exports[`fixup() when onFixup handler is set it can call the original handler to retain the original base behaviour 1`] = `
+Array [
+  Array [
+    "{\\"event\\":\\"One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.\\",\\"level\\":4,\\"path\\":[\\"settings\\"],\\"context\\":{\\"before\\":\\"foo\\",\\"after\\":\\"fixed\\",\\"name\\":\\"a\\",\\"messages\\":[\\"...\\"]}}
+",
+  ],
+]
+`;
+
+exports[`fixup() when onFixup handler is set then called when fixup fixes something 1`] = `
+Array [
+  Array [
+    Object {
+      "after": "/foo",
+      "before": "foo",
+      "messages": Array [
+        "must have leading slash",
+      ],
+      "name": "path",
+    },
+    [Function],
+  ],
+]
+`;
+
+exports[`fixup() when onFixup handler not set then defualt is to log a warning 1`] = `
+Array [
+  Array [
+    "{\\"event\\":\\"One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.\\",\\"level\\":4,\\"path\\":[\\"settings\\"],\\"context\\":{\\"before\\":\\"foo\\",\\"after\\":\\"fixed\\",\\"name\\":\\"a\\",\\"messages\\":[\\"...\\"]}}
+",
+  ],
+]
+`;
+
+exports[`initial() throws an error gracefully upon an unexpected error 1`] = `
+"There was an unexpected error while running the initializer for setting \\"a\\" 
+Unexpected error while trying to initialize setting"
+`;
+
+exports[`initial() throws an error when not assigned a function 1`] = `"Initializer for setting \\"a\\" was configured with a static value. It must be a function. Got: 1"`;
