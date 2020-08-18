@@ -396,21 +396,12 @@ function doCommit(
   metadata: Metadata
 ) {
   if (isNamespaceSpecifier(specifier)) {
-    log.trace('committing namespace', { specifier, key, input, parentData, metadata })
-    const metadataNamespace = metadata as MetadataNamespace
-    const dataNamespace = parentData[key]
-    Lo.forOwn(input, (v, k) => {
-      metadataNamespace.fields[k] =
-        metadataNamespace.fields[k] ?? createMetadataLeaf(undefined, metadataFrom, { isPassthrough: true })
-      doCommit(specifier.fields[k], metadataFrom, k, v, dataNamespace, metadataNamespace.fields[k])
-    })
-    log.trace('done committing namespace', { specifier, key, input, parentData, metadata })
+    doCommitNamespace(specifier, metadataFrom, input, parentData[key], metadata as MetadataNamespace)
     return
   }
 
   if (isRecordSpecifier(specifier)) {
-    const metadataRecord = metadata as MetadataRecord
-    doCommitRecord(specifier, metadataFrom, input, parentData[key], metadataRecord)
+    doCommitRecord(specifier, metadataFrom, input, parentData[key], metadata as MetadataRecord)
     return
   }
 
@@ -422,6 +413,26 @@ function doCommit(
   if (metadataFrom === 'initial') {
     metadataLeaf.initial = input
   }
+}
+
+/**
+ *
+ */
+function doCommitNamespace(
+  specifier: SpecifierNamespace,
+  metadataFrom: MetadataValueFromType,
+  input: any,
+  data: any,
+  metadata: MetadataNamespace
+) {
+  log.trace('committing namespace', { specifier, input, data, metadata })
+  Lo.forOwn(input, (v, k) => {
+    metadata.fields[k] =
+      metadata.fields[k] ?? createMetadataLeaf(undefined, metadataFrom, { isPassthrough: true })
+    doCommit(specifier.fields[k], metadataFrom, k, v, data, metadata.fields[k])
+  })
+  // log.trace('done committing namespace', { specifier, input, data, metadata })
+  return
 }
 
 /**
@@ -464,7 +475,7 @@ function doCommitRecord(
       metadata.initial = metadata.value
     }
   })
-  log.trace('done committing record', { specifier, input, data, metadata })
+  // log.trace('done committing record', { specifier, input, data, metadata })
 }
 /**
  * specifiers
