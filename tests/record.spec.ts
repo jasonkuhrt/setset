@@ -32,38 +32,13 @@ describe('initial()', () => {
     // prettier-ignore
     const s = S.create<{ a?: R<{ b: number }> }>({ fields: { a: { entry: { fields: { b: {} } } } } })
     expect(s.data).toEqual({ a: {} })
-    expect(s.metadata).toEqual({
-      type: 'namespace',
-      fields: {
-        a: {
-          type: 'record',
-          from: 'initial',
-          value: {},
-          initial: {},
-        },
-      },
-    })
+    expect(s.metadata).toMatchSnapshot()
   })
   describe('metadata', () => {
     it('captured immutable initial state', () => {
       const s = S.create<{ a?: R<{ b: number }> }>({ fields: { a: { entry: { fields: { b: {} } } } } })
       s.change({ a: { foobar: { b: 1 } } })
-      expect(s.metadata).toEqual({
-        type: 'namespace',
-        fields: {
-          a: {
-            type: 'record',
-            from: 'initial', // todo set
-            value: {
-              foobar: {
-                type: 'namespace',
-                fields: { b: { type: 'leaf', value: 1, from: 'change', initial: undefined } },
-              },
-            },
-            initial: {},
-          },
-        },
-      })
+      expect(s.metadata).toMatchSnapshot()
     })
     it('captures immutable initial state even with sub-initializers', () => {
       // prettier-ignore

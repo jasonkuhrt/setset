@@ -99,7 +99,7 @@ function metadataNamespaceFromData(specifier: SpecifierNamespace, data: PlainObj
 /**
  *
  */
-function resolveNamespace(
+function normalizeNamespace(
   options: Options,
   metadataFrom: MetadataValueFromType,
   specifier: SpecifierNamespace,
@@ -134,10 +134,10 @@ function resolveNamespace(
     }
   }
 
-  return resolve(options, metadataFrom, specifier, longhandValue, data, metadata, info)
+  return normalize(options, metadataFrom, specifier, longhandValue, data, metadata, info)
 }
 
-function resolveRecord(
+function normalizeRecord(
   options: Options,
   metadataFrom: MetadataValueFromType,
   specifier: SpecifierRecord,
@@ -164,7 +164,7 @@ function resolveRecord(
       metadata.value[entryName] = initial.metadata as MetadataNamespace // todo don't assume record-namespace
     }
 
-    rec[entryName] = resolve(
+    rec[entryName] = normalize(
       options,
       metadataFrom,
       specifier.entry as MetadataNamespace, // todo don't assume record-namesapce
@@ -197,7 +197,7 @@ function onFixup(info: FixupInfo): void {
   )
 }
 
-function resolveLeaf(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo): any {
+function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo): any {
   let resolvedValue = input
 
   /**
@@ -276,7 +276,7 @@ function resolveLeaf(options: Options, specifier: SpecifierLeaf, input: any, inf
  * fixups, validation and so on until finally assigning it into the setting data.
  * The input is not mutated. The data is.
  */
-export function resolve(
+export function normalize(
   options: Options,
   metadataFrom: MetadataValueFromType,
   parentSpecifier: SpecifierNamespace,
@@ -312,7 +312,7 @@ export function resolve(
     // }
 
     if (isNamespaceSpecifier(specifier)) {
-      newData[inputFieldName] = resolveNamespace(
+      newData[inputFieldName] = normalizeNamespace(
         options,
         metadataFrom,
         specifier,
@@ -325,7 +325,7 @@ export function resolve(
     }
 
     if (isRecordSpecifier(specifier)) {
-      newData[inputFieldName] = resolveRecord(
+      newData[inputFieldName] = normalizeRecord(
         options,
         metadataFrom,
         specifier,
@@ -338,7 +338,7 @@ export function resolve(
     }
 
     if (isLeafSpecifier(specifier)) {
-      newData[inputFieldName] = resolveLeaf(
+      newData[inputFieldName] = normalizeLeaf(
         options,
         specifier,
         inputFieldValue,
@@ -414,9 +414,8 @@ function doCommit(
     return
   }
 
+  log.trace('committing leaf', { key, input, parentData, metadata })
   const metadataLeaf = metadata as MetadataLeaf
-
-  log.trace('committing leaf', { key, input, parentData, metadataLeaf })
   parentData[key] = input
   metadataLeaf.value = input
   metadataLeaf.from = metadataFrom
@@ -436,6 +435,7 @@ function doCommitRecord(
   metadata: MetadataRecord
 ) {
   log.trace('committing record', { specifier, input, data, metadata })
+  metadata.from = metadataFrom
   Lo.forOwn(input, (entryInput, entryKey) => {
     // todo assumes record-namespace
     // nothing indicating that these are namespaces, implied, would recurse into leaf otherwise

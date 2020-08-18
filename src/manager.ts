@@ -1,7 +1,7 @@
 import * as Logger from '@nexus/logger'
 import * as Lo from 'lodash'
 import { DataDefault, MetadataState, Spec } from '.'
-import { commit, createInfo, dataFromMetadata, FixupInfo, initialize, resolve } from './settings'
+import { commit, createInfo, dataFromMetadata, FixupInfo, initialize, normalize } from './settings'
 import { validateSpecifier } from './spec-validation'
 import { isDevelopment, PlainObject } from './utils'
 
@@ -63,7 +63,7 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
     metadata: state.metadata,
     change(input) {
       log.debug('change', { input })
-      const newData = resolve(options, 'change', { fields }, input, state.data, state.metadata, info)
+      const newData = normalize(options, 'change', { fields }, input, state.data, state.metadata, info)
       commit({ fields: Lo.cloneDeep(fields) }, 'change', newData, state.data, state.metadata)
       return api
     },

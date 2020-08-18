@@ -76,6 +76,46 @@ Object {
 }
 `;
 
+exports[`initial() is omittable, defaulting to empty object (optional reocrd case) 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "initial",
+      "initial": Object {},
+      "type": "record",
+      "value": Object {},
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`initial() metadata captured immutable initial state 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "from": "change",
+      "initial": Object {},
+      "type": "record",
+      "value": Object {
+        "foobar": Object {
+          "fields": Object {
+            "b": Object {
+              "from": "change",
+              "initial": undefined,
+              "type": "leaf",
+              "value": 1,
+            },
+          },
+          "type": "namespace",
+        },
+      },
+    },
+  },
+  "type": "namespace",
+}
+`;
+
 exports[`initial() metadata captures immutable initial state even with sub-initializers 1`] = `
 Object {
   "fields": Object {
@@ -130,7 +170,7 @@ exports[`initial() metadata captures immutable initial state even with sub-initi
 Object {
   "fields": Object {
     "a": Object {
-      "from": "initial",
+      "from": "change",
       "initial": Object {
         "foobar": Object {
           "fields": Object {
