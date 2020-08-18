@@ -161,7 +161,7 @@ Object {
               "value": 2,
             },
             "c": Object {
-              "from": "set",
+              "from": "change",
               "initial": 1,
               "type": "leaf",
               "value": 3,

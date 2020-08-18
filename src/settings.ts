@@ -13,7 +13,7 @@ const log = Logger.log.child('setset')
  * Metadata
  */
 
-type MetadataValueFromType = 'set' | 'initial'
+type MetadataValueFromType = 'change' | 'initial'
 
 /**
  * todo

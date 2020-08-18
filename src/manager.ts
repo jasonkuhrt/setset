@@ -63,8 +63,8 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
     metadata: state.metadata,
     change(input) {
       log.debug('change', { input })
-      const newData = resolve(options, 'set', { fields }, input, state.data, state.metadata, info)
-      commit({ fields: Lo.cloneDeep(fields) }, 'set', newData, state.data, state.metadata)
+      const newData = resolve(options, 'change', { fields }, input, state.data, state.metadata, info)
+      commit({ fields: Lo.cloneDeep(fields) }, 'change', newData, state.data, state.metadata)
       return api
     },
     reset() {

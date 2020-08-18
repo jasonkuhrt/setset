@@ -59,7 +59,7 @@ describe('.metadata', () => {
     const s = S.create<{ a?: string }>({ fields: { a: { initial: c('foo') } } })
     // prettier-ignore
     expect(s.change({ a: 'bar' }).metadata).toEqual({
-      type: 'namespace', fields: { a: { type: 'leaf', from: 'set', value: 'bar', initial: 'foo' } },
+      type: 'namespace', fields: { a: { type: 'leaf', from: 'change', value: 'bar', initial: 'foo' } },
     })
   })
   it('models namespaces', () => {

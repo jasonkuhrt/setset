@@ -11,7 +11,7 @@ describe('change', () => {
   })
   it('.metadata reflects the change', () => {
     const s = S.create<{ a: number }>({ fields: { a: {} } })
-    expect(s.change({ a: 1 }).metadata.fields.a).toMatchObject({ from: 'set', value: 1 })
+    expect(s.change({ a: 1 }).metadata.fields.a).toMatchObject({ from: 'change', value: 1 })
   })
   it('array data is not merged in .data', () => {
     const s = S.create<{ a: number[] }>({ fields: { a: {} } })
@@ -21,7 +21,7 @@ describe('change', () => {
   it('array data is not merged in .metadata', () => {
     const s = S.create<{ a: number[] }>({ fields: { a: {} } })
     expect(s.change({ a: [3] }).data).toEqual({ a: [3] })
-    expect(s.change({ a: [2] }).metadata.fields.a).toMatchObject({ from: 'set', value: [2] })
+    expect(s.change({ a: [2] }).metadata.fields.a).toMatchObject({ from: 'change', value: [2] })
   })
 })
 

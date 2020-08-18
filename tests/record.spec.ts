@@ -57,7 +57,7 @@ describe('initial()', () => {
             value: {
               foobar: {
                 type: 'namespace',
-                fields: { b: { type: 'leaf', value: 1, from: 'set', initial: undefined } },
+                fields: { b: { type: 'leaf', value: 1, from: 'change', initial: undefined } },
               },
             },
             initial: {},
