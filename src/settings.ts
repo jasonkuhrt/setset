@@ -181,7 +181,7 @@ function normalizeRecord(
 }
 
 export type FixupInfo = {
-  name: string
+  path: string
   before: unknown
   after: unknown
   messages: string[]
@@ -222,7 +222,7 @@ function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, i
       const fixupInfo = {
         before: input,
         after: maybeFixedup.value,
-        name: renderPath(info), // todo rename to "path"
+        path: renderPath(info),
         messages: maybeFixedup.messages,
       }
       if (options.onFixup) {
