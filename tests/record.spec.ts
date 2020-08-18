@@ -1,3 +1,4 @@
+import * as Lo from 'lodash'
 import * as S from '../src'
 import { R } from './__helpers'
 
@@ -76,6 +77,7 @@ describe('initial()', () => {
 describe('mapEntryType', () => {
   it.todo('required if the entry input type does not match data type')
 })
+
 describe('mapEntryData', () => {
   it('required if the entry input field name does not match any data field name; called if given', () => {
     // prettier-ignore
@@ -101,17 +103,34 @@ describe('mapEntryData', () => {
       })
     expect(s.data).toEqual({ a: { foobar: { a: 1, b: 1 } } })
   })
-  it('metadata considers source of contribution as being "initial" (instead of e.g. "set") and immutable as usual', () => {
+  it('metadata considers source of contribution as being "initial" (instead of e.g. "change") and immutable as usual', () => {
     // prettier-ignore
     const s = S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({
-        fields: { a: { mapEntryData: (data) => ({ a: data.a, b: data.a }), initial: () => ({ foobar: { a: 1 } }), entry: { fields: { a: { initial: () => 1 } } } } }
-      })
+      fields: { a: { mapEntryData: (data) => ({ a: data.a, b: data.a }), initial: () => ({ foobar: { a: 1 } }), entry: { fields: { a: { initial: () => 1 } } } } }
+    })
     const metadataAInitial = s.metadata.fields.a.initial
     expect(s.metadata).toMatchSnapshot()
     s.change({ a: { foobar: { a: 2 } } })
     expect(s.metadata.fields.a.initial).toEqual(metadataAInitial)
   })
+  it('upon reset mapEntryData is rerun over entries from initializer', () => {
+    const s = S.create<{ a?: R<{ b: number }> }, { a: R<{ b: number; c: number }> }>({
+      fields: {
+        a: {
+          entry: { fields: { b: {} } },
+          initial: () => ({ default: { b: 1 } }),
+          mapEntryData: (input) => ({ c: 3, ...input }),
+        },
+      },
+    })
+    const data1 = Lo.cloneDeep(s.data)
+    const metadata1 = Lo.cloneDeep(s.metadata)
+    s.reset()
+    expect(s.data).toEqual(data1)
+    expect(s.metadata).toEqual(metadata1)
+  })
 })
+
 describe('entryShorthand', () => {
   it.todo('can be provided to allow shorthands on entries (like namespaces)')
 })

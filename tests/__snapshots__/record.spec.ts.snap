@@ -216,7 +216,7 @@ Object {
 }
 `;
 
-exports[`mapEntryData metadata considers source of contribution as being "initial" (instead of e.g. "set") and immutable as usual 1`] = `
+exports[`mapEntryData metadata considers source of contribution as being "initial" (instead of e.g. "change") and immutable as usual 1`] = `
 Object {
   "fields": Object {
     "a": Object {

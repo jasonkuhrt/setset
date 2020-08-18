@@ -49,7 +49,6 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
 
   // todo we currently have to clone the given spec deeply because mapEntryData mutations the spec with shadow specifiers
   // and shodow specifiers currently break the second+ initialize run (e.g. during reset)
-  // todo we didn't catch this yet with own unit test, but other nexus unit tets caught the issue
 
   const initial = initialize({ fields: Lo.cloneDeep(fields) }, info)
   const state = {
