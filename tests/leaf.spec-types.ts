@@ -1,3 +1,7 @@
+/**
+ * Synthetic Leaves
+ */
+import * as Moment from 'moment'
 import * as S from '..'
 
 type R<T> = Record<string, T>
@@ -76,3 +80,10 @@ S.create<{ a: numebr }, { b: number }>({ fields: { a: {} } })
 S.create<{ a: number }, { a: number }>({ fields: { a: {} } })
 // @ts-expect-error
 S.create<{ a: number }, { a: number }>({ fields: { a: { mapData: (a) => ({ b: a }) } } })
+
+/**
+ * Synthetic Leaves
+ */
+
+S.create<{ m: S.Leaf<Moment.Moment> }>({ fields: { m: {} } }).change({ m: Moment.utc() }).data.m.format()
+S.create<{ m: S.Leaf<string> }>({ fields: { m: {} } }).change({m:'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.'})

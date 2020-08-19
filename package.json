@@ -31,6 +31,7 @@
     "dripip": "0.10.0",
     "jest": "26.4.0",
     "jest-watch-typeahead": "0.6.0",
+    "moment": "^2.27.0",
     "prettier": "2.0.5",
     "ts-jest": "26.2.0",
     "typescript": "3.9.7",

@@ -20,10 +20,22 @@ import {
 
 export type ExcludeShorthand<T> = OnlyPlainObjectOrInterface<T>
 
-export type DataDefault<input> = {
-  [k in keyof input]-?: IncludesPlainObjectOrInterface<input[k]> extends true
-    ? DataDefault<OnlyPlainObjectOrInterface<input[k]>>
-    : ExcludeUndefined<input[k]>
+export type DataFromInput<Input> = {
+  [K in keyof Input]-?: Input[K] extends Leaf
+    ? ExcludeUndefined<Input[K]['type']>
+    : IncludesPlainObjectOrInterface<Input[K]> extends true
+    ? DataFromInput<OnlyPlainObjectOrInterface<Input[K]>>
+    : ExcludeUndefined<Input[K]>
+}
+
+export type UserInput<Input> = {
+  [K in keyof Input]: Input[K] extends Leaf
+    ? Input[K]['type'] extends NativeLeaf
+      ? AlreadyNativeTypeError
+      : Input[K]['type']
+    : Input[K] extends object
+    ? UserInput<Input[K]>
+    : Input[K]
 }
 
 export type KeysWhereDataRequiredOrNotInData<Input, Data> = {
@@ -44,7 +56,9 @@ type OnlyPropsInOther<T, U> = {
 
 type NO_DATA_MATCH = 'NO_DATA_MATCH'
 
-type Node<Input, Data, Key> = IncludesRecord<Lookup<Input, Key>> extends true
+type Node<Input, Data, Key> = Lookup<Input, Key> extends Leaf
+  ? LeafSpec<Lookup<Input, Key>['type'], Key, Data>
+  : IncludesRecord<Lookup<Input, Key>> extends true
   ? RecordSpec<Lookup<Input, Key>, Key, Data>
   : IncludesPlainObjectOrInterface<Lookup<Input, Key>> extends true
   ? NamespaceSpec<Lookup<Input, Key>, Key, Data>
@@ -260,3 +274,9 @@ export type Fixup<Input = Primitive> = (input: Input) => null | { value: Input; 
 export type MapType<Input = Primitive, Return = Primitive> = (input: Input) => Return
 
 export type Shorthand<Input = Primitive, Return = PlainObject> = (input: Input) => Return
+
+export type Leaf<T = any> = { __settingKind: 'Leaf'; type: T }
+
+export type AlreadyNativeTypeError = 'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.'
+
+export type NativeLeaf = Primitive | Date | RegExp

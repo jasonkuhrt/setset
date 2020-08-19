@@ -1,7 +1,8 @@
 import * as Logger from '@nexus/logger'
-import { DataDefault, MetadataState, Spec } from '.'
+import { DataFromInput, MetadataState, Spec } from '.'
 import { commit, createInfo, dataFromMetadata, FixupInfo, initialize, normalize } from './settings'
 import { validateSpecifier } from './spec-validation'
+import { UserInput } from './static'
 import { isDevelopment, PlainObject } from './utils'
 
 const log = Logger.log.child('settings')
@@ -11,7 +12,7 @@ const log = Logger.log.child('settings')
  */
 export type Manager<Input extends PlainObject, Data extends PlainObject> = {
   reset(): Manager<Input, Data>
-  change(input: Input): Manager<Input, Data>
+  change(input: UserInput<Input>): Manager<Input, Data>
   original(): Data
   metadata: MetadataState<Data>
   data: Data
@@ -33,7 +34,7 @@ export type Options = {
 /**
  *
  */
-export function create<Input extends PlainObject, Data extends PlainObject = DataDefault<Input>>({
+export function create<Input extends PlainObject, Data extends PlainObject = DataFromInput<Input>>({
   fields,
   ...options
 }: {

@@ -9,16 +9,16 @@ import { KeepRequiredKeys } from "../src/utils"
 
 interface A { a?: number }
 
-const dataDefualt1: S.DataDefault<{}> = {}
-const dataDefualt2: S.DataDefault<{ a: 1 }>               = { a: 1 }
-const dataDefualt3: S.DataDefault<{ a: { a: 1 } }>        = { a: { a: 1 } }
-const dataDefualt4: S.DataDefault<{ a: 1 | { a: 1 } }>    = { a: { a: 1 } }
-tst.assertTrue<tst.Equals<{a: { a: number }}, S.DataDefault<{ a: 1 | A }>>>()
+const dataDefualt1: S.DataFromInput<{}> = {}
+const dataDefualt2: S.DataFromInput<{ a: 1 }>               = { a: 1 }
+const dataDefualt3: S.DataFromInput<{ a: { a: 1 } }>        = { a: { a: 1 } }
+const dataDefualt4: S.DataFromInput<{ a: 1 | { a: 1 } }>    = { a: { a: 1 } }
+tst.assertTrue<tst.Equals<{a: { a: number }}, S.DataFromInput<{ a: 1 | A }>>>()
 
 // optionality
-const dataDefualt1b: S.DataDefault<{ a?: 1 }>             = { a: 1 }
+const dataDefualt1b: S.DataFromInput<{ a?: 1 }>             = { a: 1 }
 // @ts-expect-error
-const dataDefualt1c: S.DataDefault<{ a?: 1 }>             = { a: undefined }
+const dataDefualt1c: S.DataFromInput<{ a?: 1 }>             = { a: undefined }
 
 type a = string extends keyof never ? 1:2
 

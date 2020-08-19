@@ -7,7 +7,6 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -218,6 +217,58 @@ settings.metadata // { type: "leaf", value: 1, from: 'change', initial: 0 }
 The `.original` property contains a representation of the `.data` as it was just after the instane was first constructed. This is a convenience property derived from the more complex `.metadata` property.
 
 ### Working With Leaves
+
+Leaves are the building block of settings. They are terminal points representing a concrete setting. This is in contrast to namespaces or records which contain more settings within.
+
+All JS scalar types are considered leaf settings as are instances of a well known classes like `Date` or `RegExp`.
+
+```ts
+type Input = { foo: string; bar: RegExp; qux: Date }
+
+const settings = Setset.create<Input>({ fields: { foo: {}, bar: {}, qux: {} } })
+
+settings.change({ foo: 'bar', bar: /.../, qux: new Date() })
+```
+
+You can force Setset to treat anything as a leaf by wrapping it within the `Leaf` type. These are called _synthetic leves_. For example here is how Setset reacts to a [Moment](https://momentjs.com/) instance by default. It treats it as a namespace and expects all the methods on the Moment class to be implemented as settings.
+
+```ts
+import * as Moment from 'moment'
+
+type Input = { startOn: Moment }
+
+const settings = Setset.create<Input>({ fields: { startOn: { fields: {} } } })
+```
+
+```
+Type '{}' is missing the following properties from type '...': format, startOf, endOf, add, and 78 more
+```
+
+Now here it is fixed via the `Leaf` type. Notice that the types in `.change()` and `.data` only deal with `Moment` types like you would expect (`Leaf` has been stripped).
+
+```ts
+import * as Moment from 'moment'
+
+type Input = { startOn: Setset.Leaf<Moment> }
+
+const settings = Setset.create<Input>({ fields: { startOn: {} } })
+
+settings.change({ startOn: Moment.utc() })
+settings.data.startOn.format()
+```
+
+If you try to apply `Leaf` to a type Setset already considers a leaf natively you'll get a nice little string literal error message. Example:
+
+```ts
+type Input = { foo: Setset.Leaf<string> }
+
+const settings = Setset.create<Input>({ fields: { foo: {} } })
+
+settings.change({
+  // Setset makes the type of `foo` be literally this string literal
+  foo: 'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.',
+})
+```
 
 #### Initializers
 
