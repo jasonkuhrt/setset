@@ -235,7 +235,17 @@ export type RecordSpec<Dict, K, Data, DictEntry = Lookup<ExcludeUndefined<Dict>,
       ? {}
       : {
           // todo how does no data match affect this?
-          mapEntryData(data: OnlyPropsInOther<Lookup<Lookup<Data,K>,string>, ExcludeShorthand<DictEntry>>, key: string): Lookup<Lookup<Data,K>,string>
+          /**
+           * Map the normalized input for a new record entry to the data
+           * representation. This method is required when your data type has fields
+           * that are not in your input type.
+           *
+           * @param normalizedInput The input for the new entry, normalized (no
+           * shorthands, etc.), given by the user or initializers.
+           *
+           * @param key The name under which this entry shows up in the reocrd.
+           */
+          mapEntryData(normalizedInput: OnlyPropsInOther<Lookup<Lookup<Data,K>,string>, ExcludeShorthand<DictEntry>>, key: string): Lookup<Lookup<Data,K>,string>
         }
     )
 

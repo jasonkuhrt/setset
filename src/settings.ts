@@ -515,7 +515,7 @@ export function isRecordSpecifier(specifier: any): specifier is SpecifierRecord 
 
 export type SpecifierRecord<Entry = any> = {
   entry: unknown extends Entry ? Specifier : Entry
-  mapEntryData?(newEntryData: any, entryKey: string): any
+  mapEntryData?(normalizedInput: any, key: string): any
 }
 
 /**
