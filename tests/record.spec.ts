@@ -1,4 +1,3 @@
-import * as Lo from 'lodash'
 import * as S from '../src'
 import { R } from './__helpers'
 
@@ -113,21 +112,23 @@ describe('mapEntryData', () => {
     s.change({ a: { foobar: { a: 2 } } })
     expect(s.metadata.fields.a.initial).toEqual(metadataAInitial)
   })
-  it('upon reset mapEntryData is rerun over entries from initializer', () => {
-    const s = S.create<{ a?: R<{ b: number }> }, { a: R<{ b: number; c: number }> }>({
-      fields: {
-        a: {
-          entry: { fields: { b: {} } },
-          initial: () => ({ default: { b: 1 } }),
-          mapEntryData: (input) => ({ c: 3, ...input }),
+  describe('regression tests', () => {
+    it('even after reset mapEntryData callback only receives input from initialized and given input', () => {
+      const mapEntryData = jest.fn().mockImplementation((input, key) => {
+        return { c: 3, ...input }
+      })
+      const s = S.create<{ a?: R<{ b: number }> }, { a: R<{ b: number; c: number }> }>({
+        fields: {
+          a: {
+            entry: { fields: { b: {} } },
+            initial: () => ({ default: { b: 1 } }),
+            mapEntryData,
+          },
         },
-      },
+      })
+      s.reset()
+      expect(mapEntryData.mock.calls).toMatchSnapshot()
     })
-    const data1 = Lo.cloneDeep(s.data)
-    const metadata1 = Lo.cloneDeep(s.metadata)
-    s.reset()
-    expect(s.data).toEqual(data1)
-    expect(s.metadata).toEqual(metadata1)
   })
 })
 

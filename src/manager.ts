@@ -1,5 +1,4 @@
 import * as Logger from '@nexus/logger'
-import * as Lo from 'lodash'
 import { DataDefault, MetadataState, Spec } from '.'
 import { commit, createInfo, dataFromMetadata, FixupInfo, initialize, normalize } from './settings'
 import { validateSpecifier } from './spec-validation'
@@ -50,7 +49,7 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
   // todo we currently have to clone the given spec deeply because mapEntryData mutations the spec with shadow specifiers
   // and shodow specifiers currently break the second+ initialize run (e.g. during reset)
 
-  const initial = initialize({ fields: Lo.cloneDeep(fields) }, info)
+  const initial = initialize({ fields }, info)
   const state = {
     data: initial.data as Data,
     original: (undefined as any) as Data, // lazy
@@ -63,12 +62,12 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
     change(input) {
       log.debug('change', { input })
       const newData = normalize(options, 'change', { fields }, input, state.data, state.metadata, info)
-      commit({ fields: Lo.cloneDeep(fields) }, 'change', newData, state.data, state.metadata)
+      commit({ fields }, 'change', newData, state.data, state.metadata)
       return api
     },
     reset() {
       log.debug('reset')
-      const initial = initialize({ fields: Lo.cloneDeep(fields) }, info)
+      const initial = initialize({ fields }, info)
       api.data = state.data = initial.data as any
       api.metadata = state.metadata = initial.metadata as any
       return api

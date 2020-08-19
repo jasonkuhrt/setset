@@ -267,3 +267,20 @@ Object {
   "type": "namespace",
 }
 `;
+
+exports[`mapEntryData regression tests even after reset mapEntryData callback only receives input from initialized and given input 1`] = `
+Array [
+  Array [
+    Object {
+      "b": 1,
+    },
+    "default",
+  ],
+  Array [
+    Object {
+      "b": 1,
+    },
+    "default",
+  ],
+]
+`;

@@ -380,7 +380,7 @@ export function commit(
       metadata.fields[fieldName]
     )
   })
-  log.trace('done comitting change', { specifier, metadataFrom, input, data, metadata })
+  // log.trace('done comitting change', { specifier, metadataFrom, input, data, metadata })
   return data
 }
 
@@ -427,6 +427,7 @@ function doCommitNamespace(
 ) {
   log.trace('committing namespace', { specifier, input, data, metadata })
   Lo.forOwn(input, (v, k) => {
+    // todo this might be breaking ability to detatch references
     metadata.fields[k] =
       metadata.fields[k] ?? createMetadataLeaf(undefined, metadataFrom, { isPassthrough: true })
     doCommit(specifier.fields[k], metadataFrom, k, v, data, metadata.fields[k])
@@ -452,7 +453,9 @@ function doCommitRecord(
     // nothing indicating that these are namespaces, implied, would recurse into leaf otherwise
     data[entryKey] = data[entryKey] ?? {}
 
-    if (specifier.mapEntryData) {
+    // We want to run the data mapper. It is run on initialize already. On initialize it also calls into commit.
+    // Thus in commit we avoid double run on the case of initial.
+    if (specifier.mapEntryData && metadataFrom !== 'initial') {
       runEntryDataMapper(
         specifier,
         metadataFrom,
@@ -613,6 +616,7 @@ function initializeRecord(specifier: SpecifierRecord<SpecifierNamespace>, info: 
     .entries()
     .reduce(
       (acc, [entK, entV]) => {
+        if (entV.isShadow) return acc
         const init = initialize(entV, appendPath(info, ['*', entK]))
         acc.data[entK] = init.data
         acc.metadataRecordValue[entK] = init.metadata
@@ -656,7 +660,7 @@ function initializeRecord(specifier: SpecifierRecord<SpecifierNamespace>, info: 
   }
 
   if (specifier.mapEntryData) {
-    log.trace('running entry data mapper')
+    log.trace('run entry data mapper for record initialization', { entries: result.data })
     // todo runner wrapper, error handling etc.
     Lo.forOwn(result.data, (newEntryData, entryKey) => {
       runEntryDataMapper(specifier, 'initial', newEntryData, entryKey, result.metadata.value[entryKey])
@@ -684,7 +688,7 @@ function runEntryDataMapper(
 ) {
   // todo runner wrapper, error handling etc.
   log.trace('running entry data mapper')
-  const entryInputWithAddedData = specifier.mapEntryData!(entryInput, entryKey)
+  const entryInputWithAddedData = specifier.mapEntryData!(Lo.cloneDeep(entryInput), entryKey)
   // augment the specifer, input, & metadata
   // the shadow data doesn't show up in any of these places like normal input
   // to keep the recurisve system going, synthetically construct the needed things
