@@ -230,6 +230,8 @@ const settings = Setset.create<Input>({ fields: { foo: {}, bar: {}, qux: {} } })
 settings.change({ foo: 'bar', bar: /.../, qux: new Date() })
 ```
 
+#### Synthetic Leaves
+
 You can force Setset to treat anything as a leaf by wrapping it within the `Leaf` type. These are called _synthetic leves_. For example here is how Setset reacts to a [Moment](https://momentjs.com/) instance by default. It treats it as a namespace and expects all the methods on the Moment class to be implemented as settings.
 
 ```ts
@@ -272,13 +274,50 @@ settings.change({
 
 #### Initializers
 
-#### Fixups
+Usually you want your input settings to be optional with good defaults as that provides for a better developer experience. An optional input looks like this:
 
-#### Validators
+```ts
+type Input = { foo?: string }
+```
+
+Remember that Setset infers the Data type by default, and remember one of the transformations performed to achieve this is making all settings required. Therefore, by default, Setset will require optional Inputs to have an initializer, like so:
+
+```ts
+Setset.create<Input>({ fields: { foo: { initial: () => '' } } }).data.foo // guaranteed string
+```
+
+If Setset didn't require the initializer for `foo` here then you would be exposed to a runtime error because `.data.foo` type would appear to be `string` while at runtime actually being `string | undefined`.
+
+If you explicitly mark your settings _data_ type as optional, then a few things happen. Let's take a look.
+
+```ts
+type Data = { foo?: string }
+
+Setset.create<Input, Data>({ fields: { foo: { initial: () => '' } } }) //        1
+Setset.create<Input, Data>({ fields: { foo: { initial: () => undefined } } }) // 2
+Setset.create<Input, Data>({ fields: { foo: {} } }) //                           3
+```
+
+1. Firstly, you can still supply an initializer and it works as you expect. But note that `.data.foo` remains `undefined | string` since that is what your `Data` type says.
+2. It is now also possible for your initializer to return `undefined` (aka. simply not return). This might be handy if your initializer has some dynamic logic that only _conditionally_ returns a value.
+3. Finally, you can omit the initializer altogether.
+
+Here are the possible states at a glance:
+
+| Input Required | Data Required | Initializer                     |
+| -------------- | ------------- | ------------------------------- |
+| Y              | N             | Forbidden                       |
+| Y              | Y             | Forbidden                       |
+| N              | Y             | Required                        |
+| N              | N             | Optional & may return undefined |
 
 #### Type mappers
 
 #### Data mappers
+
+#### Fixups
+
+#### Validators
 
 ### Working With Namespaces
 
@@ -317,6 +356,7 @@ class {
 ## Roadmap
 
 - [] allow env vars to populate settings
+- [] initializers that can derive off of other inputs + circular detection
 - [] track env vars as a source of the current value
 - [] \$initial magic var to reset settting to its original state (re-running initializers)
 - [] dev mode that runs initial through fixup and validation
