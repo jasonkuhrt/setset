@@ -284,3 +284,8 @@ Array [
   ],
 ]
 `;
+
+exports[`mapEntryData throws gracefully if unexpected error 1`] = `
+"There was an unexpected error while running the record entry data mapper for setting \\"a.default\\" 
+oops"
+`;

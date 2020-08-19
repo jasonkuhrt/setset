@@ -78,6 +78,22 @@ describe('mapEntryType', () => {
 })
 
 describe('mapEntryData', () => {
+  it('throws gracefully if unexpected error', () => {
+    const mapEntryData = jest.fn().mockImplementation(() => {
+      throw new Error('oops')
+    })
+    expect(() =>
+      S.create<{ a?: R<{ b: number }> }, { a: R<{ b: number; c: number }> }>({
+        fields: {
+          a: {
+            entry: { fields: { b: {} } },
+            initial: () => ({ default: { b: 1 } }),
+            mapEntryData,
+          },
+        },
+      })
+    ).toThrowErrorMatchingSnapshot()
+  })
   it('required if the entry input field name does not match any data field name; called if given', () => {
     // prettier-ignore
     const s = S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({

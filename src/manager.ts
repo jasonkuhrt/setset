@@ -62,7 +62,7 @@ export function create<Input extends PlainObject, Data extends PlainObject = Dat
     change(input) {
       log.debug('change', { input })
       const newData = normalize(options, 'change', { fields }, input, state.data, state.metadata, info)
-      commit({ fields }, 'change', newData, state.data, state.metadata)
+      commit({ fields }, 'change', newData, state.data, state.metadata, info)
       return api
     },
     reset() {

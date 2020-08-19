@@ -365,7 +365,8 @@ export function commit(
   metadataFrom: MetadataValueFromType,
   input: any,
   data: any,
-  metadata: MetadataNamespace
+  metadata: MetadataNamespace,
+  info: TraversalInfo
 ) {
   log.trace('committing change', { specifier, metadataFrom, input, data, metadata })
   Lo.forOwn(input, (fieldInput, fieldName) => {
@@ -377,7 +378,8 @@ export function commit(
       fieldName,
       fieldInput,
       data,
-      metadata.fields[fieldName]
+      metadata.fields[fieldName],
+      info
     )
   })
   // log.trace('done comitting change', { specifier, metadataFrom, input, data, metadata })
@@ -393,15 +395,16 @@ function doCommit(
   key: string,
   input: any,
   parentData: any,
-  metadata: Metadata
+  metadata: Metadata,
+  info: TraversalInfo
 ) {
   if (isNamespaceSpecifier(specifier)) {
-    doCommitNamespace(specifier, metadataFrom, input, parentData[key], metadata as MetadataNamespace)
+    doCommitNamespace(specifier, metadataFrom, input, parentData[key], metadata as MetadataNamespace, info)
     return
   }
 
   if (isRecordSpecifier(specifier)) {
-    doCommitRecord(specifier, metadataFrom, input, parentData[key], metadata as MetadataRecord)
+    doCommitRecord(specifier, metadataFrom, input, parentData[key], metadata as MetadataRecord, info)
     return
   }
 
@@ -423,14 +426,15 @@ function doCommitNamespace(
   metadataFrom: MetadataValueFromType,
   input: any,
   data: any,
-  metadata: MetadataNamespace
+  metadata: MetadataNamespace,
+  info: TraversalInfo
 ) {
   log.trace('committing namespace', { specifier, input, data, metadata })
   Lo.forOwn(input, (v, k) => {
     // todo this might be breaking ability to detatch references
     metadata.fields[k] =
       metadata.fields[k] ?? createMetadataLeaf(undefined, metadataFrom, { isPassthrough: true })
-    doCommit(specifier.fields[k], metadataFrom, k, v, data, metadata.fields[k])
+    doCommit(specifier.fields[k], metadataFrom, k, v, data, metadata.fields[k], appendPath(info, k))
   })
   // log.trace('done committing namespace', { specifier, input, data, metadata })
   return
@@ -444,7 +448,8 @@ function doCommitRecord(
   metadataFrom: MetadataValueFromType,
   input: any,
   data: any,
-  metadata: MetadataRecord
+  metadata: MetadataRecord,
+  info: TraversalInfo
 ) {
   log.trace('committing record', { specifier, input, data, metadata })
   metadata.from = metadataFrom
@@ -461,7 +466,8 @@ function doCommitRecord(
         metadataFrom,
         entryInput,
         entryKey,
-        metadata.value[entryKey] as MetadataNamespace
+        metadata.value[entryKey] as MetadataNamespace,
+        appendPath(info, entryKey)
       )
     }
 
@@ -471,7 +477,8 @@ function doCommitRecord(
       entryKey,
       entryInput,
       data,
-      metadata.value[entryKey]
+      metadata.value[entryKey],
+      appendPath(info, entryKey)
     )
 
     if (metadataFrom === 'initial') {
@@ -661,10 +668,23 @@ function initializeRecord(specifier: SpecifierRecord<SpecifierNamespace>, info: 
 
   if (specifier.mapEntryData) {
     log.trace('run entry data mapper for record initialization', { entries: result.data })
-    // todo runner wrapper, error handling etc.
     Lo.forOwn(result.data, (newEntryData, entryKey) => {
-      runEntryDataMapper(specifier, 'initial', newEntryData, entryKey, result.metadata.value[entryKey])
-      doCommitRecord(specifier, 'initial', { [entryKey]: newEntryData }, result.data, result.metadata)
+      runEntryDataMapper(
+        specifier,
+        'initial',
+        newEntryData,
+        entryKey,
+        result.metadata.value[entryKey],
+        appendPath(info, entryKey)
+      )
+      doCommitRecord(
+        specifier,
+        'initial',
+        { [entryKey]: newEntryData },
+        result.data,
+        result.metadata,
+        appendPath(info, entryKey)
+      )
     })
   }
 
@@ -684,11 +704,19 @@ function runEntryDataMapper(
   metadataFrom: MetadataValueFromType,
   entryInput: any,
   entryKey: string,
-  entryMetdata: MetadataNamespace
+  entryMetdata: MetadataNamespace,
+  info: TraversalInfo
 ) {
-  // todo runner wrapper, error handling etc.
   log.trace('running entry data mapper')
-  const entryInputWithAddedData = specifier.mapEntryData!(Lo.cloneDeep(entryInput), entryKey)
+  let entryInputWithAddedData
+  try {
+    entryInputWithAddedData = specifier.mapEntryData!(Lo.cloneDeep(entryInput), entryKey)
+  } catch (e) {
+    const message = `There was an unexpected error while running the record entry data mapper for setting "${renderPath(
+      info
+    )}"`
+    throw ono(e, { info, input: entryInput }, message)
+  }
   // augment the specifer, input, & metadata
   // the shadow data doesn't show up in any of these places like normal input
   // to keep the recurisve system going, synthetically construct the needed things
