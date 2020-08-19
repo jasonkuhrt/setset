@@ -313,11 +313,35 @@ Here are the possible states at a glance:
 
 #### Type mappers
 
+Sometimes a setting has a different type between its input and data representations. Setset's heuristic to detect this is any field in `Input` whose full path (e.g. a series of namespaces) also exists in `Data` but with a different type. For example:
+
+```ts
+type Input = { foo: string }
+type Data = { foo: number }
+```
+
+In such a case, Setset will require that you specify a _type mapper_. Type mappers are functions you provide that accept the input and must return a value whose type conforms to whatever is specified in the `Data`. For example:
+
+```ts
+Setset.create<Input, Data>({ fields: { foo: { mapType (input) => Number(input) } } })
+```
+
+Data mappers are run against input from initializers and from `.change` invocations. Thus they can run once at construction time and then once every setting change.
+
 #### Data mappers
 
 #### Fixups
 
 #### Validators
+
+#### Order of Operations
+
+As you have seen there are a number of methods that leaf settings may have. Sometimes there are none, sometimes one, sometimes multiple. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
+
+1. Initializer OR User input (on change)
+2. Fixup
+3. Validate
+4. Type Map OR Data map (type & data mappers are mutually exclusive)
 
 ### Working With Namespaces
 
