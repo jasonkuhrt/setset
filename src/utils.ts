@@ -101,3 +101,13 @@ export function mergeShallow(o1: any, o2: any) {
   }
   return o1
 }
+
+export type IsEqual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+
+// type PickWherePropsAlsoInOther<T, U> = {
+//   [K in FilterInOverlappingKeys<T, U>]: T[K]
+// }
+
+// type FilterInOverlappingKeys<T, U> = {
+//   [K in keyof T]: K extends keyof U ? K : never
+// }[keyof T]

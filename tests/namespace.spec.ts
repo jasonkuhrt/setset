@@ -1,6 +1,6 @@
 import * as tst from 'typescript-test-utils'
 import * as S from '../src'
-import { c } from './__helpers'
+import { c, R } from './__helpers'
 
 describe('specifier', () => {
   it('can be omitted when input+data is optional', () => {
@@ -138,20 +138,127 @@ describe('with shorthands', () => {
     })
     expect(s.change({ a: () => 1 }).data).toEqual({ a: { b: '1' } })
   })
-  it('if input/data types differ and shorthand used the type mapper receives the expanded input', () => {
-    // prettier-ignore
-    const s = S.create<{ a: string | { b: string } }, { a: { b: number } }>({
-        fields: { a: {
-          shorthand: (s) => ({b:s}),
-          fields: { b: { mapType(v) { tst.assertTrue<tst.Equals<string, typeof v>>(); return Number(v) } } } } }
-      })
-    expect(s.change({ a: '1' }).data).toEqual({ a: { b: 1 } })
-  })
+
   it('changing with a shorthand on a namespace that does not support them will error gracefully', () => {
     const s = S.create<{ a: { b: string } }>({ fields: { a: { fields: { b: {} } } } })
     // @ts-expect-error
     expect(() => s.change({ a: 'runtime error' })).toThrowError(
       'Setting "a" is a namespace with no shorthand so expects an object but received a non-object: \'runtime error\''
     )
+  })
+})
+
+describe('map on root namespace', () => {
+  it('it works on root', () => {
+    // prettier-ignore
+    const s = S.create<{ b1: string }, { b2: string }>({
+      map(input, ctx) { return { b2:'bar' } },
+      fields: { b1: {} }
+    })
+    expect(s.change({ b1: 'foo' }).data).toEqual({ b1: 'foo', b2: 'bar' })
+  })
+})
+
+describe('map on record entry namespace', () => {
+  it('context param contains "key" prop indicating where in record this namespace comes from', () => {
+    // prettier-ignore
+    const s = S.create<{ a: R<{ b1: string }> }, { a: R<{ b2: {path:string[],key:string} }> }>({
+        fields: { a: { entry: {
+            map(input, ctx) { tst.assertTrue<tst.Equals<{path:string[],key:string}, typeof ctx>>(); return {b2:ctx} },
+            fields: { b1: {} } }
+        }}
+      })
+    expect(s.change({ a: { foobar: { b1: 'ignore' } } }).data).toEqual({
+      a: { foobar: { b1: 'ignore', b2: { path: ['__root__', 'a', 'foobar'], key: 'foobar' } } },
+    })
+  })
+  it('runs over entries provided by record initializer', () => {
+    // prettier-ignore
+    const s = S.create<{ a: R<{ b1: string }> }, { a: R<{ b2: {input: {b1:string},ctx: {path:string[],key:string}} }> }>({
+      fields: { a: {
+        initial: c({foo:{b1:''}}),
+        entry: {
+          map(input, ctx) { return {b2:{input:{...input}, ctx}} },
+          fields: { b1: {} }
+        }
+      }}
+    })
+    expect(s.data).toMatchSnapshot()
+  })
+})
+
+describe('map with initializers does not show up in the metadata data, and...', () => {
+  it('runs at initialization time with input from namesapce initializer', () => {
+    // prettier-ignore
+    const s = S.create<{ a: { b?: { c1:string }  } }, { a: { b: { c2: string} } }>({
+        fields: { a: { fields: { b: {
+          initial(){ return { c1:'foo'} },
+          map(input, ctx) { return { c2: input.c1 } },
+          fields: { c1: {} }
+        }}}}
+      })
+    expect(s.data).toEqual({ a: { b: { c1: 'foo', c2: 'foo' } } })
+    expect(s.metadata).toMatchSnapshot()
+  })
+  it('runs at initialization time with input from namesapce field initializers', () => {
+    // prettier-ignore
+    const s = S.create<{ a: { b1?: string } }, { a: { b2: string } }>({
+        fields: { a: {
+          map(input, ctx) { return {b2:input.b1} },
+          fields: { b1: { initial: c('foo')} }
+        }}
+      })
+    expect(s.data).toEqual({ a: { b1: 'foo', b2: 'foo' } })
+    expect(s.metadata).toMatchSnapshot()
+  })
+  it('runs at initialization time with input from namespace and field initializers', () => {
+    // prettier-ignore
+    const s = S.create<{ a: { b?: { c1:string, d1?:string }  } }, { a: { b: { c2: string, d2: string} } }>({
+        fields: { a: { fields: { b: {
+          initial(){ return { c1:'c1-foo'} },
+          map(input, ctx) { return { c2: input.c1, d2: input.d1 } },
+          fields: { c1: {}, d1: { initial: c('d1-foo') } }
+        }}}}
+      })
+    expect(s.data).toEqual({ a: { b: { c1: 'c1-foo', c2: 'c1-foo', d1: 'd1-foo', d2: 'd1-foo' } } })
+    expect(s.metadata).toMatchSnapshot()
+  })
+})
+
+describe('map on non-root namespace', () => {
+  it.todo('gracefully errors when unexpected error')
+  it('when input is not in data it is statically unavailable in data but actually present there at runtime', () => {
+    // prettier-ignore
+    const s = S.create<{ a: { b1: string } }, { a: { b2: string } }>({
+        fields: { a: {
+          map(input, ctx) { return {b2:'bar'} },
+          fields: { b1: {} }
+        }}
+      })
+    expect(s.change({ a: { b1: 'foo' } }).data).toEqual({ a: { b1: 'foo', b2: 'bar' } })
+  })
+  it('input param (1st) is the normalized input (e.g. shorthands are expanded)', () => {
+    const map = jest.fn().mockImplementation((input, ctx) => {
+      return { b: Number(input.b) }
+    })
+
+    // prettier-ignore
+    const s = S.create<{ a: string | { b: string } }, { a: { b: number } }>({
+      fields: { a: {
+        map,
+        shorthand(s) { return {b:s} },
+        fields: { b: {} } } }
+    })
+    expect(s.change({ a: '1' }).data).toEqual({ a: { b: 1 } })
+    expect(map.mock.calls).toMatchSnapshot()
+  })
+  it('context param (2nd) contains path prop', () => {
+    // prettier-ignore
+    const s = S.create<{ a: { b: string } }, { a: { b: {path:string[]} } }>({
+        fields: { a: {
+          map(input, ctx) { tst.assertTrue<tst.Equals<{path:string[]}, typeof ctx>>(); return {b:ctx} },
+          fields: { b: {} } } }
+      })
+    expect(s.change({ a: { b: 'ignore' } }).data).toEqual({ a: { b: { path: ['__root__', 'a'] } } })
   })
 })

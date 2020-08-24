@@ -3,14 +3,14 @@
  * It contains the rich conditional type system powering the settings library.
  */
 
-import { PartialDeep, Primitive } from 'type-fest'
+import { Primitive } from 'type-fest'
 import {
   ExcludePlainObjectOrInterface,
   ExcludeUndefined,
   Includes,
   IncludesPlainObjectOrInterface,
   IncludesRecord,
-  IsSameKeys,
+  IsEqual,
   KeepOptionalKeys,
   KeepRequiredKeys,
   Lookup,
@@ -18,81 +18,125 @@ import {
   PlainObject,
 } from './utils'
 
-export type ExcludeShorthand<T> = OnlyPlainObjectOrInterface<T>
+// todo implement context
+type BaseContext = { path: string[] }
 
-export type DataFromInput<Input> = {
+export type Spec<Input, Data> = NamespaceSpec<Input, Data, {}>
+
+export type InferDataFromInput<Input> = {
   [K in keyof Input]-?: Input[K] extends Leaf
     ? ExcludeUndefined<Input[K]['type']>
     : IncludesPlainObjectOrInterface<Input[K]> extends true
-    ? DataFromInput<OnlyPlainObjectOrInterface<Input[K]>>
+    ? InferDataFromInput<OnlyPlainObjectOrInterface<Input[K]>>
     : ExcludeUndefined<Input[K]>
 }
 
-export type UserInput<Input> = {
-  [K in keyof Input]: Input[K] extends Leaf
-    ? Input[K]['type'] extends NativeLeaf
-      ? AlreadyNativeTypeError
-      : Input[K]['type']
-    : Input[K] extends object
-    ? UserInput<Input[K]>
-    : Input[K]
-}
+export type UserInput<Input> = UnwrapSyntheticLeavesDeeply<Input, true>
 
-export type KeysWhereDataRequiredOrNotInData<Input, Data> = {
+export type KeysWhereNotPresentOrRequiredInData<Input, Data> = {
   [K in keyof Input]: K extends keyof Data ? (undefined extends Data[K] ? never : K) : K
 }[keyof Input]
 
-type KeysWhereDataOptionalOrNotInData<Input, Data> = {
+type KeysWhereNotPresentOrOptionalInData<Input, Data> = {
   [K in keyof Input]: K extends keyof Data ? (undefined extends Data[K] ? K : never) : K
 }[keyof Input]
 
-type FilterInOverlappingKeys<T, U> = {
-  [K in keyof T]: K extends keyof U ? K : never
-}[keyof T]
-
-type OnlyPropsInOther<T, U> = {
-  [K in FilterInOverlappingKeys<T, U>]: T[K]
-}
-
 type NO_DATA_MATCH = 'NO_DATA_MATCH'
 
-type Node<Input, Data, Key> = Lookup<Input, Key> extends Leaf
-  ? LeafSpec<Lookup<Input, Key>['type'], Key, Data>
+type Node<Input, Data, Key, LocalContext> = Lookup<Input, Key> extends Leaf
+  ? LeafSpec<Lookup<Input, Key>['type'], Lookup<Data, Key>>
   : IncludesRecord<Lookup<Input, Key>> extends true
-  ? RecordSpec<Lookup<Input, Key>, Key, Data>
+  ? RecordSpec<Lookup<Input, Key>, Lookup<Data, Key>>
   : IncludesPlainObjectOrInterface<Lookup<Input, Key>> extends true
-  ? NamespaceSpec<Lookup<Input, Key>, Key, Data>
-  : LeafSpec<Lookup<Input, Key>, Key, Data>
+  ? NamespaceSpec<Lookup<Input, Key>, Lookup<Data, Key, NO_DATA_MATCH>, LocalContext>
+  : LeafSpec<Lookup<Input, Key>, Lookup<Data, Key>>
 
 /**
- * todo
+ * Namespace Utils
  */
-// prettier-ignore
-export type Spec<Input, Data> =
-  (
-    KeysWhereDataOptionalOrNotInData<Input, Data> extends never
-      ? {}
-      : { [Key in KeysWhereDataOptionalOrNotInData<Input, Data>]+?: Node<Input,Data,Key> }
-  ) &
-  (
-    KeysWhereDataRequiredOrNotInData<Input, Data> extends never
-      ? {}
-      : { [Key in KeysWhereDataRequiredOrNotInData<Input, Data>]-?: Node<Input,Data,Key> }
-  )
+
+export type ExcludeShorthand<T> = OnlyPlainObjectOrInterface<T>
+
+type NormalizeNamespaceInput<Input, Data> = NormalizeNamespaceInputFieldsOptionalityWithDataFieldsOptionality<
+  ExcludeShorthand<Input>,
+  Data
+>
+
+type NormalizeNamespaceInputFieldsOptionalityWithDataFieldsOptionality<Input, Data> =
+  // input optional + data optional = input optional
+  // input optional + data required = input required
+  // input optional + no data       = input required
+  // input required + *             = input required
+  // prettier-ignore
+  (InputKeysWhereOptionalAndInDataToo<Input,Data> extends never ? {} : Pick<Input, InputKeysWhereOptionalAndInDataToo<Input,Data>>) &
+  (Required<Omit<Input, InputKeysWhereOptionalAndInDataToo<Input,Data>>>)
+
+type InputKeysWhereOptionalAndInDataToo<Input, Data> = {
+  [K in keyof Input]: K extends keyof Data
+    ? undefined extends Input[K]
+      ? undefined extends Data[K]
+        ? K
+        : never
+      : never
+    : never
+}[keyof Input]
+
+export type GetNamespaceDataWhereDivergingFromInput<Input, Data> = Pick<
+  ExcludeUndefined<Data>,
+  GetNamespaceDataKeysWhereDivergingFromInput<
+    ExcludeShorthand<ExcludeUndefined<Input>>,
+    ExcludeUndefined<Data>
+  >
+>
+
+export type GetNamespaceDataKeysWhereDivergingFromInput<Input, Data> = {
+  [K in keyof Data]: K extends keyof Input
+    ? IsNamespaceInputFieldEqualDataField<Data[K], Input[K]> extends true
+      ? never
+      : K
+    : K
+}[keyof Data]
+
+// optionality differences does not count in determinining diverging
+type IsNamespaceInputFieldEqualDataField<InputField, DataField> = IsEqual<
+  ExcludeUndefined<InputField>,
+  ExcludeUndefined<DataField>
+>
+
+type OmitNamespaces<T> = {
+  [K in keyof T]: IncludesPlainObjectOrInterface<T[K]> extends false
+    ? T[K]
+    : IsEqual<K, string> extends true
+    ? T[K]
+    : never
+}
+
+type IsNamespace<T> = string extends keyof T
+  ? false
+  : IncludesPlainObjectOrInterface<T> extends true
+  ? true
+  : false
+
+type IsNamespaceInputEqualData<Input, Data> = IsEqual<
+  Required<OmitNamespaces<UnwrapSyntheticLeavesDeeply<ExcludeShorthand<Input>>>>,
+  Required<OmitNamespaces<ExcludeUndefined<Data>>>
+>
 
 //prettier-ignore
-export type NamespaceSpec<Input, Key, Data> =
+export type NamespaceSpec<Input, Data, LocalContext> =
   {
-    fields: Spec<OnlyPlainObjectOrInterface<Input>, Lookup<Data, Key, NO_DATA_MATCH>>
+    fields: NamespaceFields<ExcludeShorthand<Input>, Data>
   } &
   // todo jsdoc 1) when namespace has no matching data key then developer is responsible
   // todo to map the data tree over _somehow_. Impossible to know how, so return type is
   // todo any possible data. This logic is arbitrary and not guaranteed to work. You should
   // todo unit test it!
   (
-    Lookup<Data, Key> extends never
-      ? { mapData(input:ExcludeShorthand<Input>): PartialDeep<Data> }
-      : {}
+    Data extends NO_DATA_MATCH
+    ? {}  // something already diverged higher up in the hierarchy, then nothing to do here
+    : IsNamespaceInputEqualData<Input, Data> extends true
+    ? {}
+    : { map(normalizedInput: NormalizeNamespaceInput<Input, ExcludeUndefined<Data>>, context: BaseContext & LocalContext): GetNamespaceDataWhereDivergingFromInput<Input, Data> }
   ) &
   /**
    * If namespace is union with non-pojo type then shorthand required 
@@ -115,11 +159,72 @@ export type NamespaceSpec<Input, Key, Data> =
     undefined extends Input
       ? {} extends KeepOptionalKeys<Input>
         ? {}
-        : Includes<Lookup<Data,Key>, undefined> extends true
+        : Includes<Data, undefined> extends true
           ? {}
           : { initial(): KeepRequiredKeys<Exclude<Input, undefined>> }
       : {}
   )
+
+/**
+ * todo
+ */
+// prettier-ignore
+export type NamespaceFields<Input, Data> =
+  (
+    KeysWhereNotPresentOrOptionalInData<Input, Data> extends never
+      ? {}
+      : { [Key in KeysWhereNotPresentOrOptionalInData<Input, Data>]+?: Node<Input,Data,Key, {}> }
+  ) &
+  (
+    KeysWhereNotPresentOrRequiredInData<Input, Data> extends never
+      ? {}
+      : { [Key in KeysWhereNotPresentOrRequiredInData<Input, Data>]-?: Node<Input,Data,Key, {}> }
+  )
+
+/**
+ * todo: currently assumes Record<string, object>
+ */
+// prettier-ignore
+// todo how does no data match affect this?
+export type RecordSpec<Input, Data> =
+  (
+    {
+      /**
+       * Specify the settings input for each entry in the record.
+       */
+      // todo how does no data match affect this?
+      entry: Node<
+        OnlyPlainObjectOrInterface<ExcludeUndefined<Input>>,
+        Data,
+        string,
+        {
+          /**
+           * The name under which this entry shows up in the reocrd.
+           */
+          key: string
+        }
+      >
+    }
+  ) &
+    /**
+     * if input is optional then initial is required
+     * unless all
+     */
+    (
+      undefined extends Input
+      ? {
+          /**
+           * Initialize the record with some entries. By default the record will be an empty object.
+           */
+          initial?(): ExcludeUndefined<Input>
+        }
+      : {
+          /**
+           * Initialize the record with some entries. Although you require users to input a record, your initializer will still be run too, if provided.
+           */
+          initial?(): ExcludeUndefined<Input>
+        }
+    )
 
 // [1]
 // If the field can be undefined it means that initial is not required.
@@ -127,7 +232,7 @@ export type NamespaceSpec<Input, Key, Data> =
 // there are may be some odd cases where iniital is present but can
 // return undefined.
 // prettier-ignore
-export type LeafSpec<Input, Key, Data> =
+export type LeafSpec<Input, Data> =
   {
     validate?: Validate<ExcludeUndefined<Input>>
     /**
@@ -150,118 +255,11 @@ export type LeafSpec<Input, Key, Data> =
    */
   (
     undefined extends Input
-      ? undefined extends Lookup<Data, Key>
+      ? undefined extends Data
         ? { initial?(): Input }
         : { initial(): ExcludeUndefined<Input> }
       : {}
-  ) &
-  /**
-   * If there is not a direct mapping between input/data then
-   * require mapping functions.
-   */
-  (
-    // do not consider `... | undefined` b/c existence is handled specially
-    NO_DATA_MATCH extends Data
-      ? {} 
-      :  Key extends keyof ExcludeUndefined<Data>
-        ?
-          ExcludeUndefined<Input> extends ExcludeUndefined<Data>[Key]
-          ? {}
-          : // if input key type does not match data then mapType is required
-            { mapType: MapType<ExcludeUndefined<Input>, ExcludeUndefined<Data>[Key]> }
-        : // if input key has no match in data then mapData is required
-          { mapData: MapType<ExcludeUndefined<Input>, ExcludeUndefined<Data>> }
   )
-
-/**
- * todo: currently assumes Record<string, object>
- */
-// prettier-ignore
-// todo how does no data match affect this?
-export type RecordSpec<Dict, K, Data, DictEntry = Lookup<ExcludeUndefined<Dict>, string>> =
-  // | { raw(input: Dict): Data[K] }
-  (
-    {
-      /**
-       * Specify the settings input for each entry in the record.
-       */
-      // todo how does no data match affect this?
-      entry: Node<OnlyPlainObjectOrInterface<ExcludeUndefined<Dict>>, Lookup<Data,K>, string>
-    }
-  ) &
-  // (
-  //   KeysWhereDataRequired<Spec<VarEntryInput, Data[K][string]>, Data[K][string]> extends never
-  //   ? {
-  //       /**
-  //        * Specify the record entry settings.
-  //        */
-  //       entryFields: Spec<VarEntryInput, Data[K][string]>
-  //     }
-  //   : {
-  //     a: [Data, K]
-  //       /**
-  //        * Specify the settings that each entry will have.
-  //        * 
-  //        * @remarks Optional because all of the settings data is optional.
-  //        */
-  //       entryFields?: Spec<VarEntryInput, Data[K][string]>
-  //     }
-  //   ) &
-    // /**
-    //  * If namespace is union with non-pojo type then shorthand required
-    //  */
-    // (ExcludePlainObjectOrInterface<DictEntry> extends never
-    //   ? {}
-    //   : {
-    //       // Reason for ExcludeUndefined is that a type with optional properties + index
-    //       // sig will force the index sig to have undefined. This pattern seems common enough
-    //       // to support here, and harmless, since, pure records shouldn't have semantic meaning of
-    //       // undefined value on keys.
-    //       entryShorthand(
-    //         input: ExcludeUndefined<ExcludePlainObjectOrInterface<DictEntry>>
-    //       ): OnlyPlainObjectOrInterface<DictEntry>
-    //     }) &
-    /**
-     * if input is optional then initial is required
-     * unless all
-     */
-    (
-      undefined extends Dict
-      ? {
-          /**
-           * Initialize the record with some entries. By default the record will be an empty object.
-           */
-          initial?(): ExcludeUndefined<Dict>
-        }
-      : {
-          /**
-           * Initialize the record with some entries. Although you require users to input a record, your initializer will still be run too, if provided.
-           */
-          initial?(): ExcludeUndefined<Dict>
-        }
-    ) &
-    /**
-     * if data has fields that are not present in input THEN mapData is required
-     */
-    (
-      // todo how does no data match affect this?
-      IsSameKeys<Required<Lookup<Lookup<Data,K>,string>>, ExcludeShorthand<Required<DictEntry>>> extends true
-      ? {}
-      : {
-          // todo how does no data match affect this?
-          /**
-           * Map the normalized input for a new record entry to the data
-           * representation. This method is required when your data type has fields
-           * that are not in your input type.
-           *
-           * @param normalizedInput The input for the new entry, normalized (no
-           * shorthands, etc.), given by the user or initializers.
-           *
-           * @param key The name under which this entry shows up in the reocrd.
-           */
-          mapEntryData(normalizedInput: OnlyPropsInOther<Lookup<Lookup<Data,K>,string>, ExcludeShorthand<DictEntry>>, key: string): Lookup<Lookup<Data,K>,string>
-        }
-    )
 
 /**
  * Isolated Types
@@ -275,8 +273,24 @@ export type MapType<Input = Primitive, Return = Primitive> = (input: Input) => R
 
 export type Shorthand<Input = Primitive, Return = PlainObject> = (input: Input) => Return
 
+/**
+ * Synthetic Leaves
+ */
+
 export type Leaf<T = any> = { __settingKind: 'Leaf'; type: T }
 
 export type AlreadyNativeTypeError = 'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.'
 
 export type NativeLeaf = Primitive | Date | RegExp
+
+type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = false> = {
+  [K in keyof T]: T[K] extends Leaf
+    ? CheckUselessWraps extends true
+      ? T[K]['type'] extends NativeLeaf
+        ? AlreadyNativeTypeError
+        : T[K]['type']
+      : T[K]['type']
+    : IsNamespace<T[K]> extends true
+    ? UnwrapSyntheticLeavesDeeply<T[K]>
+    : T[K]
+}

@@ -19,18 +19,18 @@ Powerful Incremental Type-driven Settings Engine.
     - [.metadata](#metadata)
     - [.original](#original)
   - [Working With Leaves](#working-with-leaves)
+    - [Synthetic Leaves](#synthetic-leaves)
     - [Initializers](#initializers)
+    - [Type mappers](#type-mappers)
     - [Fixups](#fixups)
     - [Validators](#validators)
-    - [Type mappers](#type-mappers)
-    - [Data mappers](#data-mappers)
+    - [Order of Operations](#order-of-operations)
   - [Working With Namespaces](#working-with-namespaces)
     - [Initializers](#initializers-1)
-    - [Data Mappers](#data-mappers)
+    - [Mappers](#mappers)
     - [Shorthands](#shorthands)
   - [Working With Records](#working-with-records)
     - [Initializers](#initializers-2)
-    - [Data Mappers](#data-mappers-1)
   - [Reciepes](#reciepes)
     - [One-Off Config](#one-off-config)
 - [Roadmap](#roadmap)
@@ -311,25 +311,6 @@ Here are the possible states at a glance:
 | N              | Y             | Required                        |
 | N              | N             | Optional & may return undefined |
 
-#### Type mappers
-
-Sometimes a setting has a different type between its input and data representations. Setset's heuristic to detect this is any field in `Input` whose full path (e.g. a series of namespaces) also exists in `Data` but with a different type. For example:
-
-```ts
-type Input = { foo: string }
-type Data = { foo: number }
-```
-
-In such a case, Setset will require that you specify a _type mapper_. Type mappers are functions you provide that accept the input and must return a value whose type conforms to whatever is specified in the `Data`. For example:
-
-```ts
-Setset.create<Input, Data>({ fields: { foo: { mapType (input) => Number(input) } } })
-```
-
-Data mappers are run against input from initializers and from `.change` invocations. Thus they can run once at construction time and then once every setting change.
-
-#### Data mappers
-
 #### Fixups
 
 #### Validators
@@ -338,24 +319,101 @@ Data mappers are run against input from initializers and from `.change` invocati
 
 As you have seen there are a number of methods that leaf settings may have. Sometimes there are none, sometimes one, sometimes multiple. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
 
-1. Initializer OR User input (on change)
+1. Initializer OR User input on change
 2. Fixup
 3. Validate
-4. Type Map OR Data map (type & data mappers are mutually exclusive)
 
 ### Working With Namespaces
 
 #### Initializers
 
-#### Data Mappers
+#### Mappers
+
+Sometimes the settings input has fields that are not in the settings data, or vice-versa, or field types differ, or some combination of these things. In any case the result is that Setset requries you to provide a _mapper_. Mappers are functions you provide that accept the input and some context data and must return the settings data which is has no corrolarry in the settings input.
+
+Mappers are a convenience. Setset could work without them by forcing you to have identical input and data types. But Setset tries to provide some facility so that you don't have to leave the abstraction for the common cases. Setset's data mapping system does not account for every possibility. If it doesn't work for your use-case then just keep your Setset input/data types the same and keep data mapping logic elsewhere in your codebase. While not ideal, it will work.
+
+The mapping system works as follows:
+
+1. The settings input that mappers receive in their first parameter (more on that below) is _normalized_ settings input. This means shorthands have been expanded, initializers run, and so on.
+
+1. Mappers do not exist for leaves. This is becaus it is thought to be too restrictive. A namespace-level mapper receives more context and so has more flexibility about how to implement the data mapping. For example maybe two input settings fuse into one data setting after some conditional transformations.
+
+1. Mapping only works downwardly. This means the mapper function kicks in at the namespace level where fields are diverging; It receives the namespace field inputs (and their descendants) as the first parameter; It must return a value matching the type of the namespace in the data whose fields don't match with the input type. Take this divergence for example:
+
+   ```ts
+   type Input = { foo?: { bar?: { a?: number; b?: string; c?: boolean } } }
+   type Data = { foo: { bar: { a: number; b: string; d: boolean } } }
+   ```
+
+   The mapper is supplied like so. We've made the type annotation explicit so you can see what the types flowing are, but note, these are inferred automatically.
+
+   ```ts
+   Setset.create<Input, Data>({
+     fields: {
+       foo: {
+         fields: {
+           bar: {
+             mapData: (input: { a: number; b: string; c: boolean }): { d: boolean } => ({...}),
+             fields: {
+               a: { ... },
+               b: { ... },
+               c: { ... },
+             }
+           }
+         }
+       },
+     },
+   })
+   ```
+
+1. Setset only considers the first divergence. For example here's the above example tweaked so that the namespace field itself also requires mapping. Note how there is no longer any need to do the mapping on `fields.foo.fields.bar`. And note the change in the mapper's parameter and return types.
+
+   ```ts
+   type Input = { foo?: { bar1?: { a?: number; b?: string; c?: boolean } } }
+   type Data = { foo: { bar2: { a: number; b: string; d: boolean } } }
+   ```
+
+   ```ts
+   Setset.create<Input, Data>({
+     fields: {
+       foo: {
+         mapData: (input: { bar1: { a: number; b: string; c: boolean }}): { bar2: { a: number; b: string; d: boolean } } => ({...}),
+         fields: {
+            bar1: {
+              fields: {
+                a: { ... }
+                b: { ... }
+                c: { ... }
+              }
+            }
+          }
+       },
+     },
+   })
+   ```
+
+1. You can think of the root settings like an anonymous namespace. And so the rules we've shown apply just as well there. For example:
+
+   ```ts
+   type Input = { foo?: string }
+   type Data = { bar: number }
+   ```
+
+   ```ts
+   Setset.create<Input, Data>({
+     mapData: (input: { foo: string }): { bar: number } => ({...}),
+     fields: { foo: {...} },
+   })
+   ```
+
+1. The Mapper's return value is merged shallowly into the namespace.
 
 #### Shorthands
 
 ### Working With Records
 
 #### Initializers
-
-#### Data Mappers
 
 ### Reciepes
 
@@ -379,9 +437,16 @@ class {
 
 ## Roadmap
 
+- [] clean export of essential utility types (e.g. data deriver)
 - [] allow env vars to populate settings
 - [] initializers that can derive off of other inputs + circular detection
 - [] track env vars as a source of the current value
 - [] \$initial magic var to reset settting to its original state (re-running initializers)
 - [] dev mode that runs initial through fixup and validation
 - [] benchmarks
+- [] Maybe/If possible: support leaf-level mappers that if given retract themselves from the namespace-level mapper; If all leaves are data mapped then forbid the namespace-level mapper automatically.
+- [] initializers with data dependencies; separate `.create` from `.initialize` steps
+- [] jsdoc everything
+- [] track mapping results in metadata
+- [] track literal input given in metadata (e.g. if a shorthand was given we would see that)
+- [] support reading config from files

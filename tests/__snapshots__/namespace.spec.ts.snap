@@ -1,5 +1,128 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`map on non-root namespace input param (1st) is the normalized input (e.g. shorthands are expanded) 1`] = `
+Array [
+  Array [
+    Object {
+      "b": 1,
+    },
+    Object {
+      "path": Array [
+        "__root__",
+        "a",
+      ],
+    },
+  ],
+  Array [
+    Object {
+      "b": "1",
+    },
+    Object {
+      "path": Array [
+        "__root__",
+        "a",
+      ],
+    },
+  ],
+]
+`;
+
+exports[`map on record entry namespace runs over entries provided by record initializer 1`] = `
+Object {
+  "a": Object {
+    "foo": Object {
+      "b1": "",
+      "b2": Object {
+        "ctx": Object {
+          "key": "foo",
+          "path": Array [
+            "__root__",
+            "a",
+            "foo",
+          ],
+        },
+        "input": Object {
+          "b1": "",
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`map with initializers does not show up in the metadata data, and... runs at initialization time with input from namesapce field initializers 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "fields": Object {
+        "b1": Object {
+          "from": "initial",
+          "initial": "foo",
+          "type": "leaf",
+          "value": "foo",
+        },
+      },
+      "type": "namespace",
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`map with initializers does not show up in the metadata data, and... runs at initialization time with input from namesapce initializer 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "fields": Object {
+        "b": Object {
+          "fields": Object {
+            "c1": Object {
+              "from": "initial",
+              "initial": "foo",
+              "type": "leaf",
+              "value": "foo",
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "namespace",
+    },
+  },
+  "type": "namespace",
+}
+`;
+
+exports[`map with initializers does not show up in the metadata data, and... runs at initialization time with input from namespace and field initializers 1`] = `
+Object {
+  "fields": Object {
+    "a": Object {
+      "fields": Object {
+        "b": Object {
+          "fields": Object {
+            "c1": Object {
+              "from": "initial",
+              "initial": "c1-foo",
+              "type": "leaf",
+              "value": "c1-foo",
+            },
+            "d1": Object {
+              "from": "initial",
+              "initial": "d1-foo",
+              "type": "leaf",
+              "value": "d1-foo",
+            },
+          },
+          "type": "namespace",
+        },
+      },
+      "type": "namespace",
+    },
+  },
+  "type": "namespace",
+}
+`;
+
 exports[`with shorthands runtime errors unexpected shorthand errors fail gracefully 1`] = `
 "There was an unexpected error while running the namespace shorthand for setting \\"a\\". The given value was 100 
 Unexpected shorthand error with value 100"

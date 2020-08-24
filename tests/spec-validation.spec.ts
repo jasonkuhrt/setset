@@ -1,14 +1,24 @@
 import * as S from '../src'
+import { R } from './__helpers'
 
-it('if mapType is assigned non-function', () => {
+it('if root mapper is assigned a non-function', () => {
   expect(() => {
     // @ts-expect-error
-    S.create<{ a: number }, { a: boolean }>({ fields: { a: { mapType: 1 } } })
-  }).toThrowError('Type mapper for setting "a" was invalid. Type mappers must be functions. Got: 1')
+    S.create<{ a: number }, { a: boolean }>({ map: 1, fields: { a: {} } })
+  }).toThrowErrorMatchingSnapshot()
 })
-it('if mapType is assigned non-function (record)', () => {
+
+it('if map is assigned a non-function', () => {
+  expect(() => {
+    // @ts-expect-error
+    S.create<{ a: { b: number } }, { a: { b: boolean } }>({ fields: { a: { map: 1, fields: { b: {} } } } })
+  }).toThrowErrorMatchingSnapshot()
+})
+
+it('if record-entry map is assigned a non-function', () => {
   expect(() => {
     // prettier-ignore
-    S.create<{ a: Record<string, {b:1}> }, { a: Record<string, {b:2}> }>({ fields: { a: { entry: { fields: { b: { mapType: 1 as any } } } } } })
-  }).toThrowError('Type mapper for setting "a.b" was invalid. Type mappers must be functions. Got: 1')
+    // @ts-expect-error
+    S.create<{ a: R<{ b: number }> }, { a: R<{ b: boolean }> }>({ fields: { a: { entry: { map: 1, fields: { b: {} } } } } })
+  }).toThrowErrorMatchingSnapshot()
 })

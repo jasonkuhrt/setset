@@ -45,7 +45,7 @@ S.create<{ a?: R<{z?: number }> }>({ fields: { a: { entry: { fields: { z: {initi
 S.create<{ a?: R<{z?: number }> }>({ fields: { a: { entry: { z: {initial: () => 1 } }, initial: () => ({foo:{z:true}}) } }})
 
 // if entry input/data field types are mismatch THEN mapType required on sub-field specifiers
-S.create<{ a: R<{z: number }> },  { a: R<{ z: boolean }> }>({ fields: { a: { entry: { fields: { z: { mapType: Boolean } } } } }})
+S.create<{ a: R<{z: number }> },  { a: R<{ z: boolean }> }>({ fields: { a: { entry: { fields: { z: {} }, map: (input) => ({ z: Boolean(input.z) }) } } }})
 // @ts-expect-error
 S.create<{ a: R<{z: number }> },  { a: R<{ z: boolean, y: 1 }> }>({ fields: { a: { entry: { fields: { z: {} } } } }})
 
@@ -58,14 +58,14 @@ S.create<{ a: R<{z: number }> },  { a: R<{ z: boolean, y: 1 }> }>({ fields: { a:
 // S.create<{ a: R<{z: number }> },  { a: R<{ y: number }> }>({ fields: { a: { entry: { fields: { z: { mapData: (z) => ({y:z})} } } } }})
 
 // if data has fields that are not present in input THEN mapEntryData is required 
-S.create<{ a: R<{a: number }> },  { a: R<{ a: number, b: number }> }>({ fields: { a: { entry: { fields: {a: {}} }, mapEntryData: (input) => ({ ...input, b:1 }) } }})
+S.create<{ a: R<{a: number }> },  { a: R<{ a: number, b: number }> }>({ fields: { a: { entry: { fields: {a: {}}, map: () => ({ b:1 }) } } }})
 // @ts-expect-error
 S.create<{ a: R<{a: number }> },  { a: R<{ a: number, b: number }> }>({ fields: { a: { entry: { a: {} } } }})
 // mapEntryData gets a representation of the data resolved from input up to then
 // NOTE autocomplete on param is wrong, shows "b" being there, but wrong, and indeed, try accessing it, not there. So just autocomplete bug in VSCode
-S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({ fields: { a: { mapEntryData: (data) => ({ a: data.a, b: data.a }), entry: { fields: { a: { initial: () => 1 } } } } } })
+S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({ fields: { a: {  entry: { fields: { a: { initial: () => 1 } }, map: (data) => ({ b: data.a }), } } } })
 // @ts-expect-error data.b is not available on the data parameter
-S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({ fields: { a: { mapEntryData: (data) => ({ a: data.a, b: data.b }), entry: { a: { initial: () => 1 } } } } })
+S.create<{ a?: R<{ a?: number }> }, { a: R<{ a: number, b: number }> }>({ fields: { a: { entry: { fields: { a: { initial: () => 1 } }, map: (data) => ({ b: data.b }),  } } } })
 
 
 const zVal = S.create<{ a?: R<{z: number }> }>({ fields: { a: { entry: { fields: { z: {} } } }}}).metadata.fields.a.value.foobar.fields.z.value

@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`if map is assigned a non-function 1`] = `"Mapper for setting specifier at path \\"a\\" was invalid. Mappers must be functions. Got: 1"`;
+
+exports[`if record-entry map is assigned a non-function 1`] = `"Mapper for setting specifier at path \\"a\\" was invalid. Mappers must be functions. Got: 1"`;
+
+exports[`if root mapper is assigned a non-function 1`] = `"Root mapper was invalid. Mappers must be functions. Got: 1"`;

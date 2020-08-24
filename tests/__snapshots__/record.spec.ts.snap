@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`errors gracefully if user supplies invalid value kind to change 1`] = `"Received non-object input for record-kind setting \\"a\\". The input was 1. Record settings must be objects.\\""`;
+
 exports[`initial() is accepted and is called (optional record case) 1`] = `
 Object {
   "fields": Object {
@@ -214,78 +216,4 @@ Object {
   },
   "type": "namespace",
 }
-`;
-
-exports[`mapEntryData metadata considers source of contribution as being "initial" (instead of e.g. "change") and immutable as usual 1`] = `
-Object {
-  "fields": Object {
-    "a": Object {
-      "from": "initial",
-      "initial": Object {
-        "foobar": Object {
-          "fields": Object {
-            "a": Object {
-              "from": "initial",
-              "initial": 1,
-              "type": "leaf",
-              "value": 1,
-            },
-            "b": Object {
-              "from": "initial",
-              "initial": 1,
-              "isShadow": true,
-              "type": "leaf",
-              "value": 1,
-            },
-          },
-          "type": "namespace",
-        },
-      },
-      "type": "record",
-      "value": Object {
-        "foobar": Object {
-          "fields": Object {
-            "a": Object {
-              "from": "initial",
-              "initial": 1,
-              "type": "leaf",
-              "value": 1,
-            },
-            "b": Object {
-              "from": "initial",
-              "initial": 1,
-              "isShadow": true,
-              "type": "leaf",
-              "value": 1,
-            },
-          },
-          "type": "namespace",
-        },
-      },
-    },
-  },
-  "type": "namespace",
-}
-`;
-
-exports[`mapEntryData regression tests even after reset mapEntryData callback only receives input from initialized and given input 1`] = `
-Array [
-  Array [
-    Object {
-      "b": 1,
-    },
-    "default",
-  ],
-  Array [
-    Object {
-      "b": 1,
-    },
-    "default",
-  ],
-]
-`;
-
-exports[`mapEntryData throws gracefully if unexpected error 1`] = `
-"There was an unexpected error while running the record entry data mapper for setting \\"a.default\\" 
-oops"
 `;

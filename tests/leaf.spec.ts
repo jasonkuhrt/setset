@@ -1,6 +1,5 @@
 import { log } from '@nexus/logger'
 import dedent from 'dedent'
-import * as tst from 'typescript-test-utils'
 import * as S from '../src'
 import { c } from './__helpers'
 
@@ -126,82 +125,6 @@ describe('initial()', () => {
       expect(S.create<{ a?: number }>({ fields: { a: { initial: c(1) } } }).data.a).toEqual(1)
       expect(S.create<{ a?: 2 }>({ fields: { a: { initial: c(2) } } }).data.a).toEqual(2)
       expect(S.create<{ a?: string }>({ fields: { a: { initial: c('a') } } }).data.a).toEqual('a')
-    })
-  })
-})
-
-describe('mapType()', () => {
-  it('do not relate to the optionality of the input or the data', () => {
-    // show that  mapType is still an required
-    S.create<{ a?: number }, { a: boolean }>({
-      fields: { a: { mapType: (a) => Boolean(a), initial: () => 1 } },
-    })
-    S.create<{ a: number }, { a?: boolean }>({ fields: { a: { mapType: (a) => a === 1 } } })
-    // show that missing mapType is still an error
-    // @ts-expect-error
-    S.create<{ a?: number }, { a: boolean }>({ fields: { a: { initial: () => 1 } } })
-    // @ts-expect-error
-    S.create<{ a: number }, { a?: boolean }>({ fields: { a: {} } })
-  })
-  describe('receive one parameter containing the input that is', () => {
-    it('not optional', () => {
-      //prettier-ignore
-      S.create<{ a: number }, { a: boolean }>({ fields: { a: { mapType: (a) => { tst.assertTrue<tst.Equals<number, typeof a>>(); return true } } } })
-    })
-    it('not optional even if input field is optional', () => {
-      //prettier-ignore
-      S.create<{ a?: number }, { a: boolean }>({ fields: { a: { mapType: (a) => { tst.assertTrue<tst.Equals<number, typeof a>>(); return true }, initial: () => 1 } } })
-    })
-  })
-  describe('return type', () => {
-    it('includes undefined if data is optionl', () => {
-      S.create<{ a: number }, { a?: boolean }>({ fields: { a: { mapType: () => undefined } } })
-    })
-  })
-  describe('at construction time', () => {
-    it('maps the initial value to its data value', () => {
-      const s = S.create<{ a?: number }, { a: boolean }>({
-        fields: { a: { initial: () => 1, mapType: (n) => n === 1 } },
-      })
-      expect(s.data.a).toEqual(true)
-    })
-    it('gracefully throws if unexpectedly fail', () => {
-      expect(() => {
-        //prettier-ignore
-        S.create<{ a: number }, { a?: boolean }>({ fields: { a: { mapType() { throw new Error('Oops') } } } })
-      }).toThrowError('There was an unexpected error while running the type mapper for setting "a" \nOops')
-    })
-  })
-  describe('at change time', () => {
-    it('maps the changed value to its data value', () => {
-      // prettier-ignore
-      const s = S.create<{ a?: number }, { a: boolean }>({ fields: { a: { initial: () => 1, mapType: (n) => n === 1 } } })
-      s.change({ a: 2 })
-      expect(s.data.a).toEqual(false)
-    })
-    it('gracefully throws if unexpectedly fail', () => {
-      //prettier-ignore
-      const mapType = jest.fn().mockImplementationOnce(() => true).mockImplementation(() => { throw new Error('Oops') })
-      expect(() => {
-        //prettier-ignore
-        const s = S.create<{ a: number }, { a?: boolean }>({ fields: { a: { mapType } } })
-        s.change({ a: 2 })
-      }).toThrowError('There was an unexpected error while running the type mapper for setting "a" \nOops')
-    })
-  })
-  describe('encounter static errors', () => {
-    it('are required when input type is not assignable to data type', () => {
-      S.create<{ a: number }, { a: boolean }>({ fields: { a: { mapType: (a) => Boolean(a) } } })
-      // @ts-expect-error
-      S.create<{ a: number }, { a: boolean }>({ fields: { a: {} } })
-    })
-    it('are forbidden when the input type is assignable to data type', () => {
-      // @ts-expect-error
-      S.create<{ a: number }, { a: number }>({ fields: { a: { mapType: (a) => Boolean(a) } } })
-    })
-    it('must return a type assignable to the field data', () => {
-      // @ts-expect-error
-      S.create<{ a: number }, { a: boolean }>({ fields: { a: { mapType: () => 1 } } })
     })
   })
 })
