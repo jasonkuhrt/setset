@@ -7,7 +7,6 @@ import { Primitive } from 'type-fest'
 import {
   ExcludePlainObjectOrInterface,
   ExcludeUndefined,
-  Includes,
   IncludesPlainObjectOrInterface,
   IncludesRecord,
   IsEqual,
@@ -159,9 +158,9 @@ export type NamespaceSpec<Input, Data, LocalContext> =
     undefined extends Input
       ? {} extends KeepOptionalKeys<Input>
         ? {}
-        : Includes<Data, undefined> extends true
-          ? {}
-          : { initial(): KeepRequiredKeys<Exclude<Input, undefined>> }
+        : undefined extends Data
+          ? { initial?(): KeepRequiredKeys<Exclude<Input, undefined>> }
+          : { initial():  KeepRequiredKeys<Exclude<Input, undefined>> }
       : {}
   )
 

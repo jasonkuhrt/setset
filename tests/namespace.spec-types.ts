@@ -1,6 +1,6 @@
 import * as tst from 'typescript-test-utils'
 import * as S from '..'
-import { NA, R } from './__helpers'
+import { c, NA, R } from './__helpers'
 
 /**
  * basic
@@ -18,14 +18,33 @@ S.create<{ a: number | { a: number } }>({ fields: { a: { shorthand: (a) => ({ a 
 //@ts-expect-error
 S.create<{ a: number | { a: number } }>({ fields: { a: { fields:{ a: {} } } } })
 
+/**
+ * initializers
+ */
+
 // if an input field type is optional AND 1+ sub input fields are required THEN initial is required 
-S.create<{ a?: { a: number } }>({ fields: { a: { initial: () => ({a:1}),  fields:{ a: {} } } } })
+S.create<{ a?: { a: number } }>({ fields: { a: { initial: c({a:1}),  fields: NA } } })
 // @ts-expect-error
-S.create<{ a?: { a: number } }>({ fields: { a: { shorthand: (a) => ({ a }), fields:{ a: {} } } } })
-// ... but if data says field can be undefined too THEN initial is forbidden
+S.create<{ a?: { a: number } }>({ fields: { a: { fields: NA } } })
+
+// if data says field can be undefined too THEN initial is optional
 S.create<{ a?: { a: number } }, { a?: { a: number } }>({ fields: { a: { fields:{ a: {} } } } })
-// ... but if 0 sub input fields are required THEN initial is forbidden (b/c we can automate the initial)
-S.create<{ a?: { a?: number } }>({ fields: { a: { fields:{ a: { initial: () => 1 } } } } })
+// @ts-expect-error show that initial is optional by showing return value is typed, avoid extra-field false positive
+// todo runtime test showing that "a" gets initialized to undefined
+S.create<{ a?: { a: number } }, { a?: { a: number } }>({ fields: { a: { initial: c({a:''}), fields:{ a: {} } } } })
+
+// if 0 sub input fields are required THEN initial is forbidden (b/c we can automate the initial)
+S.create<{ a?: { b?: number } }>({ fields: { a: { fields:{ b: { initial: c(1) } } } } })
+// todo @ts-expect-error (issue is no excess property check)
+S.create<{ a?: { b?: number } }>({ fields: { a: { initial: c({b:1}), fields:{ b: { initial: c(1) } } } } })
+
+// optional fields are not initializable by the namespace initializer
+// todo @ts-expect-error (issue is no excess property check)
+// todo make a runtime test showing that local initializers' values take precedence
+S.create<{ a?: { a: number, b?: number } }>({ fields: { a: { initial: () => ({a:1, b:2}), fields:{ a: {}, b:{initial: c(1) } } } } })
+
+// initializers can return shorthands if present
+S.create<{ a?: number | { a: number } }>({ fields: { a: { shorthand: (a) => ({a}), initial: c(1),  fields: NA } } })
 
 /**
  * interfaces

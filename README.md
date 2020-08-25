@@ -7,6 +7,7 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -21,14 +22,14 @@ Powerful Incremental Type-driven Settings Engine.
   - [Working With Leaves](#working-with-leaves)
     - [Synthetic Leaves](#synthetic-leaves)
     - [Initializers](#initializers)
-    - [Type mappers](#type-mappers)
     - [Fixups](#fixups)
     - [Validators](#validators)
     - [Order of Operations](#order-of-operations)
   - [Working With Namespaces](#working-with-namespaces)
+    - [Shorthands](#shorthands)
     - [Initializers](#initializers-1)
     - [Mappers](#mappers)
-    - [Shorthands](#shorthands)
+    - [Order of Operations](#order-of-operations-1)
   - [Working With Records](#working-with-records)
     - [Initializers](#initializers-2)
   - [Reciepes](#reciepes)
@@ -317,7 +318,7 @@ Here are the possible states at a glance:
 
 #### Order of Operations
 
-As you have seen there are a number of methods that leaf settings may have. Sometimes there are none, sometimes one, sometimes multiple. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
+As you have seen leaves support multiple methods. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
 
 1. Initializer OR User input on change
 2. Fixup
@@ -325,7 +326,116 @@ As you have seen there are a number of methods that leaf settings may have. Some
 
 ### Working With Namespaces
 
+#### Shorthands
+
 #### Initializers
+
+This is an esoteric feature, you usually won't need it.
+
+Like leaves, namespaces can have initializers. The reason for this is basically an edge-case: when namespaces are optional in input, required in data, and contain 1+ required fields. In such a case, the only way to maintain all the guarantees is to provide an initializer for the namespae that returns initial values for the required fields of the namespace. The value of supporting this is fairly abstract (again, an edge-case really) but basically Setset allows you to enode a pattern wherin your users would have to either not supply the namespae at all, or, supply it and be forced to also supply some subset of the fields. Why forcing them to supply values when you are able to provide defaults for them anywys via the namespace initializer is unclear, but none the less this is a possible pattern that Setset handles for you for completness sake of the possible ways you conigure your input/data types, if nothing else.
+
+Here is an example:
+
+```ts
+const settings = Setset.create<{ bar?: number; foo?: { a: string; b: string; c?: number } }>({
+  fields: {
+    bar: {
+      initial: () => 0,
+    },
+    foo: {
+      initial: () => ({ a: '', b: '' }),
+      fields: { a: {} },
+    },
+  },
+})
+```
+
+In practice a user would have two choices when interacting with these settings:
+
+```ts
+// leave "foo" to its default`
+settings.change({ bar: 10 })
+
+// configure "foo", forced to address "foo.a" & "foo.b"`
+settings.change({ foo: { a: '...', b: '...' } })
+```
+
+If the namespace supports shorthands then its initializer can return values of that form too. For example the previous example revised:
+
+```ts
+Setset.create<{ foo?: string | { a: string } }>({
+  fields: {
+    foo: {
+      initial: () => '',
+      shorthand: (a) => ({ a }),
+      fields: { a: {} },
+    },
+  },
+})
+```
+
+Namespace initializers are forbidden from returning fields that are optional. Since they are optional they will already have their own local initializers (again unless the underlying data is optional). For example:
+
+```ts
+Setset.create<{ foo?: { a: string; b?: number } }>({
+  fields: {
+    foo: {
+      initial: () => ({ a: '' }),
+      fields: { a: {}, b: { initial: () => 0 } },
+    },
+  },
+})
+```
+
+Luckily you don't need to remember this as Setset's static typing will guide you here.
+
+> Note however that, due to a [current TypeSript limitation](https://github.com/microsoft/TypeScript/issues/241#issuecomment-669138047), specifying the extra `b: 0` property initializer at the namespace level will not raise a static error. We hope TS will improve in this regard in the future. Luckily the following two things should keep you on track.
+>
+> 1. At runtime the local initializers will "win" against any incorret fields at the namespace-level initializer.
+> 1. Local initializers will often be statically required which may help you to remember that they shouldn't be at the namespace level.
+>
+> A confusing but rare case would be optional local initializer that you have not set, and a namespace initializer with field that you _have_ set. This would work at runtime, but incidentally, basically by virtue of a bug.
+
+Like with leaves, if the namespace in the underlying data is optional then the initializer becomes optional too, and may return undefined. For example:
+
+```ts
+Setset.create<{ foo?: { a: string } }, { foo?: { a: string } }>({
+  fields: {
+    foo: {
+      // this initializer could be omitted, too
+      initial: () => (Math.random() > 0.5 ? { a: '' } : undefined),
+      fields: { a: {} },
+    },
+  },
+})
+```
+
+If the Namespace fields are all optional, then the namespace initializer is forbidden. For example:
+
+```ts
+Setset.create<{ foo?: { a?: string; b?: number } }>({
+  fields: {
+    foo: {
+      fields: {
+        a: { initial: () => '' },
+        b: { initial: () => 0 },
+      },
+    },
+  },
+})
+```
+
+> Unfortunately the static enforcement here falls down for the same issue as before, TS's [lack of complete excess-property check support](https://github.com/microsoft/TypeScript/issues/241#issuecomment-669138047). This means for now you can supply a `foo.initial` method and Setset won't be able to raise a static error about it.
+
+Like for leaves, here is a table showing the different states where initializer is valid:
+
+| Input Required | 1+ fields Required | Data Required | Initializer                     |
+| -------------- | ------------------ | ------------- | ------------------------------- |
+| Y              | N                  | Y \|\| N      | Forbidden                       |
+| Y              | Y                  | Y \|\| N      | Forbidden                       |
+| N              | Y                  | Y             | Required                        |
+| N              | Y                  | N             | Optional & may return undefined |
+| N              | N                  | Y             | Optional & may return undefined |
 
 #### Mappers
 
@@ -354,7 +464,7 @@ The mapping system works as follows:
        foo: {
          fields: {
            bar: {
-             mapData: (input: { a: number; b: string; c: boolean }): { d: boolean } => ({...}),
+             map: (input: { a: number; b: string; c: boolean }): { d: boolean } => ({...}),
              fields: {
                a: { ... },
                b: { ... },
@@ -378,7 +488,7 @@ The mapping system works as follows:
    Setset.create<Input, Data>({
      fields: {
        foo: {
-         mapData: (input: { bar1: { a: number; b: string; c: boolean }}): { bar2: { a: number; b: string; d: boolean } } => ({...}),
+         map: (input: { bar1: { a: number; b: string; c: boolean }}): { bar2: { a: number; b: string; d: boolean } } => ({...}),
          fields: {
             bar1: {
               fields: {
@@ -402,14 +512,18 @@ The mapping system works as follows:
 
    ```ts
    Setset.create<Input, Data>({
-     mapData: (input: { foo: string }): { bar: number } => ({...}),
+     map: (input: { foo: string }): { bar: number } => ({...}),
      fields: { foo: {...} },
    })
    ```
 
 1. The Mapper's return value is merged shallowly into the namespace.
 
-#### Shorthands
+#### Order of Operations
+
+1. Initializer OR Change
+2. Shorthand
+3. Mapper
 
 ### Working With Records
 
@@ -441,7 +555,7 @@ class {
 - [] allow env vars to populate settings
 - [] initializers that can derive off of other inputs + circular detection
 - [] track env vars as a source of the current value
-- [] \$initial magic var to reset settting to its original state (re-running initializers)
+- [] `$initial` magic var to reset settting to its original state; re-running initializers if any or just reverting to undefined
 - [] dev mode that runs initial through fixup and validation
 - [] benchmarks
 - [] Maybe/If possible: support leaf-level mappers that if given retract themselves from the namespace-level mapper; If all leaves are data mapped then forbid the namespace-level mapper automatically.
