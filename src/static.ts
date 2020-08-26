@@ -5,11 +5,11 @@
 
 import { Primitive } from 'type-fest'
 import {
-  ExcludePlainObjectOrInterface,
   ExcludeUndefined,
   IncludesPlainObjectOrInterface,
   IncludesRecord,
   IsEqual,
+  IsRecord,
   KeepOptionalKeys,
   KeepRequiredKeys,
   Lookup,
@@ -54,7 +54,7 @@ type Node<Input, Data, Key, LocalContext> = Lookup<Input, Key> extends Leaf
  * Namespace Utils
  */
 
-export type ExcludeShorthand<T> = OnlyPlainObjectOrInterface<T>
+export type ExcludeShorthand<T> = Exclude<OnlyPlainObjectOrInterface<T>, Leaf>
 
 type NormalizeNamespaceInput<Input, Data> = NormalizeNamespaceInputFieldsOptionalityWithDataFieldsOptionality<
   ExcludeShorthand<Input>,
@@ -102,24 +102,38 @@ type IsNamespaceInputFieldEqualDataField<InputField, DataField> = IsEqual<
   ExcludeUndefined<DataField>
 >
 
-type OmitNamespaces<T> = {
-  [K in keyof T]: IncludesPlainObjectOrInterface<T[K]> extends false
-    ? T[K]
-    : IsEqual<K, string> extends true
-    ? T[K]
-    : never
+export type OmitNamespaceKeys<T> = {
+  [K in keyof T]: IsRecord<ExcludeUndefined<T[K]>> extends true
+    ? never
+    : HasNamespace<ExcludeUndefined<T[K]>> extends true
+    ? never
+    : T[K]
 }
 
-type IsNamespace<T> = string extends keyof T
-  ? false
-  : IncludesPlainObjectOrInterface<T> extends true
-  ? true
-  : false
+type HasNamespace<T> = OnlyNamespace<T> extends never ? false : true
 
-type IsNamespaceInputEqualData<Input, Data> = IsEqual<
-  Required<OmitNamespaces<UnwrapSyntheticLeavesDeeply<ExcludeShorthand<Input>>>>,
-  Required<OmitNamespaces<ExcludeUndefined<Data>>>
+export type IsNamespaceInputEqualData<Input, Data> = IsEqual<
+  Required<OmitNamespaceKeys<UnwrapSyntheticLeavesDeeply<ExcludeShorthand<Input>>>>,
+  Required<OmitNamespaceKeys<ExcludeUndefined<Data>>>
 >
+
+type OnlyNamespace<T> = T extends Function
+  ? never
+  : T extends RegExp
+  ? never
+  : T extends Date
+  ? never
+  : T extends any[]
+  ? never
+  : T extends Leaf
+  ? never
+  : T extends Primitive
+  ? never
+  : IsRecord<T> extends true
+  ? never
+  : T
+
+type OnlyShorthand<T> = UnwrapSyntheticLeaf<ExcludeUndefined<Exclude<T, OnlyNamespace<T>>>>
 
 //prettier-ignore
 export type NamespaceSpec<Input, Data, LocalContext> =
@@ -134,17 +148,18 @@ export type NamespaceSpec<Input, Data, LocalContext> =
     Data extends NO_DATA_MATCH
     ? {}  // something already diverged higher up in the hierarchy, then nothing to do here
     : IsNamespaceInputEqualData<Input, Data> extends true
-    ? {}
+    // ? { i: Input, d: Data, eq: IsNamespaceInputEqualData<Input, Data> }
+    ? {} 
     : { map(normalizedInput: NormalizeNamespaceInput<Input, ExcludeUndefined<Data>>, context: BaseContext & LocalContext): GetNamespaceDataWhereDivergingFromInput<Input, Data> }
   ) &
   /**
    * If namespace is union with non-pojo type then shorthand required 
    */
   (
-    ExcludeUndefined<ExcludePlainObjectOrInterface<Input>> extends never
-    ? {}
+    OnlyShorthand<Input> extends never
+    ? {  }
     : {
-        shorthand: Shorthand<ExcludeUndefined<ExcludePlainObjectOrInterface<Input>>, OnlyPlainObjectOrInterface<Input>>
+        shorthand: Shorthand<OnlyShorthand<Input>, UnwrapSyntheticLeavesDeeply<ExcludeShorthand<Input>>>
       }
   ) &
   /**
@@ -282,14 +297,18 @@ export type AlreadyNativeTypeError = 'Error: You wrapped Leaf<> around this fiel
 
 export type NativeLeaf = Primitive | Date | RegExp
 
-type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = false> = {
+export type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = false> = {
   [K in keyof T]: T[K] extends Leaf
-    ? CheckUselessWraps extends true
-      ? T[K]['type'] extends NativeLeaf
-        ? AlreadyNativeTypeError
-        : T[K]['type']
-      : T[K]['type']
-    : IsNamespace<T[K]> extends true
+    ? UnwrapSyntheticLeaf<T[K], CheckUselessWraps>
+    : HasNamespace<T[K]> extends true
     ? UnwrapSyntheticLeavesDeeply<T[K]>
     : T[K]
 }
+
+export type UnwrapSyntheticLeaf<T, CheckUselessWraps extends boolean = false> = T extends Leaf
+  ? CheckUselessWraps extends true
+    ? T['type'] extends NativeLeaf
+      ? AlreadyNativeTypeError
+      : T['type']
+    : T['type']
+  : T

@@ -1,5 +1,7 @@
+import moment, * as Moment from 'moment'
 import * as tst from 'typescript-test-utils'
 import * as S from '..'
+import { Leaf } from '..'
 import { c, NA, R } from './__helpers'
 
 /**
@@ -14,9 +16,20 @@ S.create<{ a: { b: number } }>({ fields: { a: { fields:{ b: {} } } } }).change({
  */
 
 // if an input type is union with non-pojo type then shorthand required 
-S.create<{ a: number | { a: number } }>({ fields: { a: { shorthand: (a) => ({ a }), fields:{ a: {} } } } })
+S.create<{ a: number | { a: number } }>({ fields: { a: { shorthand: (a) => ({ a }), fields: NA } } })
 //@ts-expect-error
-S.create<{ a: number | { a: number } }>({ fields: { a: { fields:{ a: {} } } } })
+S.create<{ a: number | { a: number } }>({ fields: { a: { fields: NA } } })
+
+// if a namespace field is optional then shorthand does not have to return it
+S.create<{ a: number | { a?: number } }>({ fields: { a: { shorthand: () => ({}), fields: NA } } })
+
+// if a namespace field is required then shorthand must return it
+// @ts-expect-error
+S.create<{ a: number | { a?: number, b: number } }>({ fields: { a: { shorthand: (num) => ({}), fields: NA } } })
+
+// synthetic leaves are supportd
+S.create<{ foo: Leaf<Moment.Moment> | { bar: Leaf<Moment.Moment> } }>({ fields: { foo: {shorthand: (bar) => ({ bar }), fields: { bar: {} } } } })
+S.create<{ foo: Leaf<Moment.Moment> | { bar: Leaf<Moment.Moment> } }>({ fields: { foo: {shorthand: () => ({ bar: moment() }), fields: { bar: {} } } } })
 
 /**
  * initializers

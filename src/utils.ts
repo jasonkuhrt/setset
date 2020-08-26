@@ -28,8 +28,6 @@ export type IncludesVoid<T> = (T extends void ? true : never) extends never ? fa
 
 export type IncludesUndefined<T> = (T extends undefined ? true : never) extends never ? false : true
 
-export type IsRecord<T> = string extends keyof T ? true : false
-
 export type OnlyIndexedType<T> = string extends keyof T ? T : never
 
 export type IncludesRecord<T> = OnlyIndexedType<Exclude<T, Primitive | void>> extends never ? false : true
@@ -53,6 +51,9 @@ export type OnlyPlainObjectOrInterface<T> = T extends Function
   : T
 
 export type IncludesPlainObjectOrInterface<T> = OnlyPlainObjectOrInterface<T> extends never ? false : true
+
+// keyof never includes string :(
+export type IsRecord<T> = T extends never ? false : string extends keyof T ? true : false
 
 export type ExcludePlainObjectOrInterface<T> = Exclude<T, OnlyPlainObjectOrInterface<T>>
 

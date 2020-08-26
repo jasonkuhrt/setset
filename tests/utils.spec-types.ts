@@ -1,7 +1,8 @@
 import * as tst from 'typescript-test-utils'
 import * as S from '..'
-import { GetNamespaceDataWhereDivergingFromInput, InferDataFromInput, KeysWhereNotPresentOrRequiredInData, UserInput } from "../src"
+import { GetNamespaceDataWhereDivergingFromInput, InferDataFromInput, IsNamespaceInputEqualData, KeysWhereNotPresentOrRequiredInData, Leaf, UnwrapSyntheticLeaf, UserInput } from "../src"
 import { KeepRequiredKeys } from "../src/utils"
+import { R } from './__helpers'
 
 /**
  * DataDefault
@@ -49,3 +50,8 @@ tst.assertTrue<tst.Equals<{a:{b:2}}, UserInput<{a:{b:2}}>>>()
 tst.assertTrue<tst.Equals<{}, GetNamespaceDataWhereDivergingFromInput<{a:boolean},{a:boolean}>>>()
 tst.assertTrue<tst.Equals<{}, GetNamespaceDataWhereDivergingFromInput<false | {a?:boolean},{a:boolean}>>>()
 tst.assertTrue<tst.Equals<{b:string}, GetNamespaceDataWhereDivergingFromInput<{a:boolean},{a:boolean, b:string}>>>()
+
+tst.assertTrue<tst.Equals<{a:boolean}, UnwrapSyntheticLeaf<Leaf<{a:boolean}>>>>()
+
+tst.assertTrue<tst.Equals<true, IsNamespaceInputEqualData<{ a: 1 }, { a: 1 }>>>()
+tst.assertTrue<tst.Equals<true, IsNamespaceInputEqualData<{ a?: R<{ b: number }> }, { a: R<{ b: number }> }>>>()

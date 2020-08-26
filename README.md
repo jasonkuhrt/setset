@@ -7,7 +7,6 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -148,11 +147,22 @@ type Input = { a?: string }
 const settings = Setset.create<Input>(...)
 ```
 
-### API Overview
+If you only want to tweak the `Data` type but otherwise use the inferred type, you can achieve this with the `InferDataFromInput` utility type. For example:
 
-#### .create
+```ts
+import * as Setset
+type Input = { a?: string }
+type Data = Setset.InferDataFromInput<Input> & { custom: string }
+const settings = Setset.create<Input, Data>(...)
+```
 
-Invoke `.create()` to create a new settings instance. There are two type parameters, one required, one optional. The first is `Input` which types the shape of the input your settings will accept in the `.change(...)` instance method. The second is `Data` which types the shape of the settings data in `.data` instane property. `Data` type parameter is _optional_. By default it is inferred from the `Input` parameter using the following transformations:
+Intersection types have some limitations. For example they cannot turn required properties into optional ones. Look to libraries like [`type-fest`](https://github.com/sindresorhus/type-fest) or the builtin utility types `Pick` `Omit` etc. to slice and dice as you need in combination with `InferDataFromInput`.
+
+### Package Exports Overview
+
+#### create
+
+Invoke `create()` to create a new settings instance. There are two type parameters, one required, one optional. The first is `Input` which types the shape of the input your settings will accept in the `.change(...)` instance method. The second is `Data` which types the shape of the settings data in `.data` instane property. `Data` type parameter is _optional_. By default it is inferred from the `Input` parameter using the following transformations:
 
 1. All fields become required
 2. All namespaces have their shorthands removed
@@ -162,6 +172,16 @@ Then you must supply the actual implementation. Implementing the settings is a c
 ```ts
 const settings = Setset.create<{ a?: 1 }>({ fields: { a: { initial: () => 0 } } })
 ```
+
+#### InferDataFromInput
+
+See guide section on Input vs Data.
+
+#### Leaf
+
+See guide section on leaves.
+
+### API `Setset` Instance Overview
 
 #### .data
 
@@ -281,7 +301,7 @@ Usually you want your input settings to be optional with good defaults as that p
 type Input = { foo?: string }
 ```
 
-Remember that Setset infers the Data type by default, and remember one of the transformations performed to achieve this is making all settings required. Therefore, by default, Setset will require optional Inputs to have an initializer, like so:
+Remember that Setset infers the `Data` type by default, and remember one of the transformations performed to achieve this is making all settings required. Therefore, by default, Setset will require optional Inputs to have an initializer, like so:
 
 ```ts
 Setset.create<Input>({ fields: { foo: { initial: () => '' } } }).data.foo // guaranteed string
@@ -327,6 +347,94 @@ As you have seen leaves support multiple methods. Here is the order of their exe
 ### Working With Namespaces
 
 #### Shorthands
+
+Namespaces have the concept of shorthands. Shorthands are leaves that expand into the namespace fields somehow. They improve the developer experience of setting settings by allowing for the most common field to be hoisted up and not require the extra level of setting nesting. For example here is a classic case with a feature toggle (Note: type anotations written explicitly for clarity purposes here, but in practice you wouldn't, they are automatically inferred):
+
+```ts
+const settings = Setset.create<{ foo?: boolean | { enabled?: boolean } }>({
+  fields: {
+    foo: {
+      shorthand: (enabled: boolean) => ({ enabled }),
+      fields: {
+        enabled: { initial: () => true },
+      },
+    },
+  },
+})
+
+settings.change({ foo: false }) // shorthand
+settings.change({ foo: { enabled: false } }) // longhand
+```
+
+When implementing shorthands you receive the non-namespace input. This means for example you can have unions.
+
+```ts
+Setset.create<{ path?: RegExp | string | { prefix?: RegExp | string } }>({
+  fields: {
+    path: {
+      shorthand: (prefix: RegExp | string): { prefix?: RegExp | string } => ({ prefix }),
+      fields: {
+        prefix: { initial: () => '' },
+      },
+    },
+  },
+})
+```
+
+Further, shorthands can have their input map to multiple namespace fields. For example:
+
+```ts
+Setset.create<{ foo?: string | { bar?: string; qux?: string; rot?: number } }>({
+  fields: {
+    path: {
+      shorthand: (foo: string): { bar?: string; qux?: string; rot?: number } => ({
+        bar: foo,
+        qux: foo.slice(1),
+      }),
+      fields: {
+        bar: { initial: () => '' },
+        qux: { initial: () => '' },
+      },
+    },
+  },
+})
+```
+
+If certain namespace fields are required then shorthands are required to expand into them. For example:
+
+```ts
+Setset.create<{ foo: string | { bar: string; qux?: string } }>({
+  fields: {
+    path: {
+      shorthand: (foo: string): { bar: string; qux?: string } => ({
+        bar: foo, // field required
+      }),
+      fields: {
+        qux: { initial: () => '' },
+      },
+    },
+  },
+})
+```
+
+Synthetic leaves are supported when you need Setset to treat an object as not a namespace.
+
+```ts
+import * as Moment from 'moment'
+
+Setset.create<{ foo: Leaf<Moment.Moment> | { bar: string; qux?: string } }>({
+  fields: {
+    path: {
+      shorthand: (foo: string): { bar: string; qux?: string } => ({
+        bar: foo, // field required
+      }),
+      fields: {
+        qux: { initial: () => '' },
+      },
+    },
+  },
+})
+```
 
 #### Initializers
 
