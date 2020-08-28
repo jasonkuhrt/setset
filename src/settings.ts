@@ -186,7 +186,7 @@ export type FixupInfo = {
   path: string
   before: unknown
   after: unknown
-  messages: string[]
+  messages?: string[]
 }
 
 /**
@@ -199,45 +199,44 @@ function onFixup(info: FixupInfo): void {
   )
 }
 
-function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo): any {
-  let resolvedValue = input
+function runFixup(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo) {
+  if (!specifier.fixup) return input
 
-  /**
-   * Run fixups
-   */
-  if (specifier.fixup) {
-    let maybeFixedup
-    try {
-      maybeFixedup = specifier.fixup(resolvedValue)
-    } catch (e) {
-      throw ono(
-        e,
-        { info, value: resolvedValue },
-        `Fixup for "${renderPath(info)}" failed while running on value ${inspect(resolvedValue)}`
-      )
+  let maybeFixedup
+
+  try {
+    maybeFixedup = specifier.fixup(input)
+  } catch (e) {
+    throw ono(
+      e,
+      { info, value: input },
+      `Fixup for "${renderPath(info)}" failed while running on value ${inspect(input)}`
+    )
+  }
+
+  if (maybeFixedup) {
+    const fixupInfo = {
+      before: input,
+      after: maybeFixedup.value,
+      path: renderPath(info),
+      messages: maybeFixedup.messages,
     }
-    if (maybeFixedup) {
-      resolvedValue = maybeFixedup.value
-      /**
-       * fixup handler
-       */
-      const fixupInfo = {
-        before: input,
-        after: maybeFixedup.value,
-        path: renderPath(info),
-        messages: maybeFixedup.messages,
+    if (options.onFixup) {
+      try {
+        options.onFixup(fixupInfo, onFixup)
+      } catch (e) {
+        throw ono(e, { info }, `onFixup callback for "${renderPath(info)}" failed`)
       }
-      if (options.onFixup) {
-        try {
-          options.onFixup(fixupInfo, onFixup)
-        } catch (e) {
-          throw ono(e, { info }, `onFixup callback for "${renderPath(info)}" failed`)
-        }
-      } else {
-        onFixup(fixupInfo)
-      }
+    } else if (maybeFixedup.messages) {
+      onFixup(fixupInfo)
     }
   }
+
+  return maybeFixedup?.value ?? input
+}
+
+function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo): any {
+  let resolvedValue = runFixup(options, specifier, input, info)
 
   /**
    * Run validators

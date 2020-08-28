@@ -24,17 +24,17 @@
   "devDependencies": {
     "@prisma-labs/prettier-config": "0.1.0",
     "@types/dedent": "^0.7.0",
-    "@types/jest": "26.0.9",
-    "@types/lodash": "^4.14.159",
+    "@types/jest": "26.0.10",
+    "@types/lodash": "^4.14.160",
     "dedent": "^0.7.0",
     "doctoc": "^1.4.0",
     "dripip": "0.10.0",
-    "jest": "26.4.0",
+    "jest": "26.4.2",
     "jest-watch-typeahead": "0.6.0",
     "moment": "^2.27.0",
-    "prettier": "2.0.5",
-    "ts-jest": "26.2.0",
-    "typescript": "3.9.7",
+    "prettier": "2.1.1",
+    "ts-jest": "26.3.0",
+    "typescript": "4.0.2",
     "typescript-test-utils": "^1.2.1"
   },
   "jest": {

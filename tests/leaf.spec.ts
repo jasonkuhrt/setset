@@ -186,6 +186,13 @@ describe('fixup()', () => {
       s.change({ a: 'foo' })
       expect(logs.mock.calls).toMatchSnapshot()
     })
+    it('not set and no messages provided then default is to do nothing', () => {
+      log.settings({ filter: '*@warn' })
+      // prettier-ignore
+      const s = S.create<{ a: string }>({ fields: { a: { fixup() { return { value: 'fixed' } } } } })
+      s.change({ a: 'foo' })
+      expect(logs.mock.calls).toMatchSnapshot()
+    })
     it('is set then default handler is not run', () => {
       log.settings({ filter: '*@warn' })
       // prettier-ignore
@@ -199,6 +206,14 @@ describe('fixup()', () => {
       const s = S.create<{ a: string }>({ onFixup(info, original) { original(info) }, fields: { a: { fixup() { return { value: 'fixed', messages: ['...'] } } } } })
       s.change({ a: 'foo' })
       expect(logs.mock.calls).toMatchSnapshot()
+    })
+    it('can receive no messages if a fixup did not provide any', () => {
+      const onFixup = jest.fn()
+      let info
+      // prettier-ignore
+      const s = S.create<{ a: string }>({ onFixup, fields: { a: { fixup() { return { value: 'fixed'  } } } } })
+      s.change({ a: 'foo' })
+      expect(onFixup.mock.calls).toMatchSnapshot()
     })
   })
   it('a namespace with shorthand runs through fixups too', () => {

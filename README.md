@@ -334,13 +334,57 @@ Here are the possible states at a glance:
 
 #### Fixups
 
+Fixups are small tweaks to inputs that allow them to be correctly stored. A use-case might be that a URL should have a trailing slash, or an protocol (http://) prefix.
+
+Here is an example that makes relative paths explicit:
+
+```ts
+Setset.create<{ path?: string }>({
+  fields: {
+    path: {
+      fixup(path) {
+        return path.match('^(./|/).*')
+          ? null
+          : { value: `./${path}`, messages: ['Please supply a "./" prefix for relative paths'] }
+      },
+      default: './',
+    },
+  },
+})
+```
+
+Notice how `null` is returned when there is no work to do. In that case Setset will perform no fixups and use the value as was. As you can see when a fixup is needed, it is specified as a structured object. `value` is the new value to use. `messages` is an array of string you can use to explain the fixups that were run (more about this in a moment).
+
+If you intend the fixup to be silent, then omit the `messages` property. If there is a chance that the fixup could surprise a user you should provide a message about it. This will lead to a better developer experience (principal of least surprise).
+
+Fixups are different than validators (see below) because they won't throw an error. Instead the mesages you provide will be logged for the developer to see. If you wish to customize this behaviour then you can pass a custom event handler like so:
+
+```ts
+Setset.create<{ path?: string }>({
+  onFixup(info, originalHandler) {
+    myCustomLogger.say(
+      `Your setting "${info.path}" was fixed from value ${info.before} to value ${
+        info.after
+      } for the following reasons:\n - ${info.messages.join('\n - ')}`
+    )
+  },
+  // ...
+})
+```
+
+As you can see the custom handler you provide has access to the fixup info and the original handler. You can pass the info directly to the original handler to achieve what Setset does by default.
+
+The fixup event handler is called any time a fixup is run due to a change. Fixups do not run against your initializers since doing so could trigger warnings that are not actionable by the developer. So always make your own initializers conform their respective fixups, if any.
+
 #### Validators
+
+TODO
 
 #### Order of Operations
 
 As you have seen leaves support multiple methods. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
 
-1. Initializer OR User input on change
+1. Initializer OR change
 2. Fixup
 3. Validate
 
@@ -635,7 +679,13 @@ The mapping system works as follows:
 
 ### Working With Records
 
+#### About
+
+TODO
+
 #### Initializers
+
+TODO
 
 ### Reciepes
 

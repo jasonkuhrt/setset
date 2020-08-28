@@ -16,6 +16,20 @@ Array [
 ]
 `;
 
+exports[`fixup() when onFixup handler can receive no messages if a fixup did not provide any 1`] = `
+Array [
+  Array [
+    Object {
+      "after": "fixed",
+      "before": "foo",
+      "messages": undefined,
+      "path": "a",
+    },
+    [Function],
+  ],
+]
+`;
+
 exports[`fixup() when onFixup handler is set it can call the original handler to retain the original base behaviour 1`] = `
 Array [
   Array [
@@ -40,6 +54,8 @@ Array [
   ],
 ]
 `;
+
+exports[`fixup() when onFixup handler not set and no messages provided then default is to do nothing 1`] = `Array []`;
 
 exports[`fixup() when onFixup handler not set then defualt is to log a warning 1`] = `
 Array [

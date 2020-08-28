@@ -281,7 +281,8 @@ export type LeafSpec<Input, Data> =
 
 export type Validate<Input = Primitive> = (value: Input) => null | { messages: string[] }
 
-export type Fixup<Input = Primitive> = (input: Input) => null | { value: Input; messages: string[] }
+//todo support no messages
+export type Fixup<Input = Primitive> = (input: Input) => null | { value: Input; messages?: string[] }
 
 export type MapType<Input = Primitive, Return = Primitive> = (input: Input) => Return
 
