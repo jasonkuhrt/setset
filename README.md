@@ -8,6 +8,7 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
+- [Installation](#installation)
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -41,6 +42,12 @@ Powerful Incremental Type-driven Settings Engine.
 - [Roadmap](#roadmap)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Installation
+
+```
+npm add setset 
+```
 
 ## Overview
 
