@@ -121,7 +121,7 @@ function normalizeNamespace(
 
   let longhandValue: PlainObject = input as any
   if (!isValueObject && specifier.shorthand) {
-    log.debug('expanding shorthand', { info })
+    log.trace('expanding shorthand', { info })
     try {
       longhandValue = specifier.shorthand(input as Primitive)
     } catch (e) {

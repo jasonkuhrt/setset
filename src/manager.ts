@@ -62,7 +62,7 @@ function treeifySpec(dec: any, parent: any) {
 export function create<Input extends PlainObject, Data extends PlainObject = InferDataFromInput<Input>>(
   specDec: Spec<Input, Data> & Options
 ): Manager<Input, Data> {
-  log.debug('construct')
+  log.trace('construct')
   const info = createInfo()
 
   const spec = treeifySpec(specDec, '__ROOT__')
@@ -85,20 +85,20 @@ export function create<Input extends PlainObject, Data extends PlainObject = Inf
     data: state.data,
     metadata: state.metadata,
     change(input) {
-      log.debug('change', { input })
+      log.trace('change', { input })
       const newData = normalize(spec, 'change', spec, input, state.data, state.metadata, info)
       commitNamespace(spec, 'change', newData, state.data, state.metadata, info)
       return api
     },
     reset() {
-      log.debug('reset')
+      log.trace('reset')
       const initial = initialize(spec, info)
       api.data = state.data = initial.data as any
       api.metadata = state.metadata = initial.metadata as any
       return api
     },
     original() {
-      log.debug('get original')
+      log.trace('get original')
       const original = state.original ?? dataFromMetadata(state.metadata, {})
       return original
     },
