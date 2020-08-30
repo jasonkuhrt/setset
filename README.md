@@ -7,7 +7,6 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -167,7 +166,7 @@ Intersection types have some limitations. For example they cannot turn required 
 
 #### create
 
-Invoke `create()` to create a new settings instance. There are two type parameters, one required, one optional. The first is `Input` which types the shape of the input your settings will accept in the `.change(...)` instance method. The second is `Data` which types the shape of the settings data in `.data` instane property. `Data` type parameter is _optional_. By default it is inferred from the `Input` parameter using the following transformations:
+Invoke `create()` to create a new settings instance. There are two type parameters, one required, one optional. The first is `Input` which types the shape of the input your settings will accept in the `.change(...)` instance method. The second is `Data` which types the shape of the settings data in `.data` instance property. `Data` type parameter is _optional_. By default it is inferred from the `Input` parameter using the following transformations:
 
 1. All fields become required
 2. All namespaces have their shorthands removed
@@ -240,7 +239,7 @@ settings.metadata // { type: "leaf", value: 1, from: 'change', initial: 0 }
 
 #### .original
 
-The `.original` property contains a representation of the `.data` as it was just after the instane was first constructed. This is a convenience property derived from the more complex `.metadata` property.
+The `.original` property contains a representation of the `.data` as it was just after the instance was first constructed. This is a convenience property derived from the more complex `.metadata` property.
 
 ### Working With Leaves
 
@@ -419,9 +418,11 @@ Your setting "foo" failed validation with value '':
 
 #### Order of Operations
 
-As you have seen leaves support multiple methods. Here is the order of their execution. You can think of these as a pipeline of pure functions reciving input from previous and producing output for next, starting from 1.
+As you have seen leaves support multiple methods. Here is the order of their execution. You run as a pipeline, each reciving input from previous.
 
-1. Initializer OR change
+Note that initialize is not run here because initializers do not run through fixups or validators.
+
+1. Change
 2. Fixup
 3. Validate
 
@@ -716,13 +717,55 @@ The mapping system works as follows:
 
 ### Working With Records
 
-#### About
-
-TODO
-
 #### Initializers
 
-TODO
+Sometimes you will want some initial entries to be in the record. To achieve this you can supply an initializer. For example:
+
+```ts
+type AThing = { b?: number }
+
+type Input = {
+  a: {
+    foo?: AThing
+    [key: string]: AThing | undefined
+  }
+}
+
+const settings = Setset.create<Input>({
+  fields: {
+    a: {
+      initial() {
+        return { foo: { b: 2 } }
+      },
+      entry: { fields: { b: {} } },
+    },
+  },
+})
+
+settings.data.a.foo // { b: 2 }
+```
+
+#### Metadata
+
+Like leaves, record metadata captures the initial state of the record. This doesn't happy with namespaes since namespaces aren't themselves data. But records are. For example (continuing from the previous example):
+
+```ts
+settings.change({ a: { foo: { b: 10 }, bar: { b: 1 } } })
+
+settings.metadata.a
+
+// {
+//   type: 'record',
+//   from: 'change',
+//   value: {
+//     foo: { type: 'namespace', fields:  { b: { type: 'leaf', from: 'change', value: 10, initial: 2 } } }
+//     bar: { type: 'namespace', fields: { b: { type: 'leaf', from: 'change', value: 1, initial: undefined } } }
+//   },
+//   initial: {
+//     foo: { type: 'namespace', fields: { b: { type: 'leaf', from: 'change', value: 2, initial: 2 } } }
+//   }
+// }
+```
 
 ### Reciepes
 
