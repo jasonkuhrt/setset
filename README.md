@@ -7,6 +7,7 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
@@ -33,8 +34,8 @@ Powerful Incremental Type-driven Settings Engine.
     - [Mappers](#mappers)
     - [Order of Operations](#order-of-operations-1)
   - [Working With Records](#working-with-records)
-    - [About](#about)
     - [Initializers](#initializers-2)
+    - [Metadata](#metadata)
   - [Reciepes](#reciepes)
     - [One-Off Config](#one-off-config)
 - [Roadmap](#roadmap)
