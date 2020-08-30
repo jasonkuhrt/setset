@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "main": "dist/index.js",
   "repository": "git@github.com:prisma-labs/project-lib-typescript.git",
-  "author": "Prisma Labs Team",
+  "author": "Jason Kuhrt",
   "license": "MIT",
   "files": [
     "dist"
