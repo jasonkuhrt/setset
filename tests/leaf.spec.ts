@@ -1,5 +1,4 @@
 import { log } from '@nexus/logger'
-import dedent from 'dedent'
 import * as S from '../src'
 import { c } from './__helpers'
 
@@ -229,9 +228,7 @@ describe('fixup()', () => {
   it('if fixup fails it errors gracefully', () => {
     // prettier-ignore
     const s = S.create<{ path: string }>({ fields: { path: { fixup() { throw new Error('Unexpected error!') } } } })
-    expect(() => s.change({ path: '' })).toThrowError(
-      'Fixup for "path" failed while running on value \'\' \nUnexpected error!'
-    )
+    expect(() => s.change({ path: '' })).toThrowErrorMatchingSnapshot()
   })
   describe('static errors', () => {
     it('fixup return .value prop must match the input type', () => {
@@ -255,21 +252,22 @@ describe('validate()', () => {
     settings.change({ a: 'bar' })
     expect(validate.mock.calls).toEqual([['bar']])
   })
-  it('if a setting fails validation then an error is thrown', () => {
+  it('if a setting fails validation then an error is thrown with structured metadata attached', () => {
     const validate = jest.fn().mockImplementation((value) => {
-      if (value === 'bar') return { messages: ['Too long', 'Too simple'] }
+      if (value === 'bar') return { reasons: ['Too long', 'Too simple'] }
     })
     const s = S.create<{ a: string }>({ fields: { a: { validate } } })
-    expect(() => s.change({ a: 'bar' })).toThrowError(dedent`
-      Your setting "a" failed validation with value 'bar':
-
-      - Too long
-      - Too simple
-    `)
+    let e
+    try {
+      s.change({ a: 'bar' })
+    } catch (e_) {
+      e = e_
+    }
+    expect(e).toMatchSnapshot()
   })
   it('initial does not pass through validate', () => {
     const validate = jest.fn().mockImplementation((value) => {
-      if (value === 'bad') return { messages: ['foobar'] }
+      if (value === 'bad') return { reasons: ['foobar'] }
     })
     expect(
       S.create<{ a?: number }>({ fields: { a: { initial: c(1), validate } } }).data
@@ -279,9 +277,15 @@ describe('validate()', () => {
     const validate = jest.fn().mockImplementation((value) => {
       throw new Error('Unexpected error while trying to validate')
     })
-    const settings = S.create<{ a: string }>({ fields: { a: { validate } } })
-    expect(() => settings.change({ a: 'bar' })).toThrowError(
-      'Validation for "a" unexpectedly failed while running on value \'bar\' \nUnexpected error while trying to validate'
-    )
+    const s = S.create<{ a: string }>({ fields: { a: { validate } } })
+    let e
+    try {
+      s.change({ a: 'bar' })
+    } catch (e_) {
+      e = e_
+    }
+    expect(e).toMatchSnapshot()
+    expect(e.info).toMatchSnapshot()
+    expect(e.value).toMatchSnapshot()
   })
 })

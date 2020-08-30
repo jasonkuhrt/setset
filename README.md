@@ -7,12 +7,16 @@ Powerful Incremental Type-driven Settings Engine.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Overview](#overview)
 - [Guide](#guide)
   - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
   - [Input vs Data](#input-vs-data)
-  - [API Overview](#api-overview)
-    - [.create](#create)
+  - [Package Exports Overview](#package-exports-overview)
+    - [create](#create)
+    - [InferDataFromInput](#inferdatafrominput)
+    - [Leaf](#leaf)
+  - [API `Setset` Instance Overview](#api-setset-instance-overview)
     - [.data](#data)
     - [.change()](#change)
     - [.reset()](#reset)
@@ -30,6 +34,7 @@ Powerful Incremental Type-driven Settings Engine.
     - [Mappers](#mappers)
     - [Order of Operations](#order-of-operations-1)
   - [Working With Records](#working-with-records)
+    - [About](#about)
     - [Initializers](#initializers-2)
   - [Reciepes](#reciepes)
     - [One-Off Config](#one-off-config)
@@ -378,7 +383,39 @@ The fixup event handler is called any time a fixup is run due to a change. Fixup
 
 #### Validators
 
-TODO
+Validators are was to ensure the integrityof some scalar. A classic example is ensuring a string matches some regular expression.
+
+Validators exist only for leaves and they only execute in the scope of single leaves. That it, it is not possible to build cross-leaf logic such as "if 'a' setting is 'x' then 'b' setting must conform to 'z'".
+
+Validators return `null` if validation passes. Otherwise they return a failure object. A failure object contains a `reasons` property where one or multiple reasons for validation failure should be given. For example:
+
+```ts
+const settings = Setset.create<{ foo?: string }>({
+  fields: {
+    foo: {
+      validate(input, failures) {
+        const reasons = []
+        if (!input.length < 1) reasons.push('Cannot be empty')
+        if (!input.match(/qux/)) reasons.push("Must match pattern 'qux'")
+        return reasons.length ? { reasons } : null
+      },
+    },
+  },
+})
+```
+
+When validation fails an error will be thrown immediately containing the given reasons as well as context about the setting that failed validation. For example:
+
+```ts
+settings.change({ foo: 'bar' })
+```
+
+```
+Your setting "foo" failed validation with value '':
+
+- Cannot be empty
+- Must match pattern 'qux'
+```
 
 #### Order of Operations
 

@@ -16,6 +16,11 @@ Array [
 ]
 `;
 
+exports[`fixup() if fixup fails it errors gracefully 1`] = `
+"Fixup for \\"path\\" failed while running on value '' 
+Unexpected error!"
+`;
+
 exports[`fixup() when onFixup handler can receive no messages if a fixup did not provide any 1`] = `
 Array [
   Array [
@@ -72,3 +77,26 @@ Unexpected error while trying to initialize setting"
 `;
 
 exports[`initial() throws an error when not assigned a function 1`] = `"Initializer for setting \\"a\\" was configured with a static value. It must be a function. Got: 1"`;
+
+exports[`validate() if a setting fails validation then an error is thrown with structured metadata attached 1`] = `
+[Error: Your setting "a" failed validation with value 'bar':
+
+- Too long
+- Too simple]
+`;
+
+exports[`validate() unexpected validator failures error gracefully 1`] = `
+[Error: Validation for "a" unexpectedly failed while running on value 'bar' 
+Unexpected error while trying to validate]
+`;
+
+exports[`validate() unexpected validator failures error gracefully 2`] = `
+Object {
+  "path": Array [
+    "__root__",
+    "a",
+  ],
+}
+`;
+
+exports[`validate() unexpected validator failures error gracefully 3`] = `"bar"`;

@@ -258,7 +258,7 @@ function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, i
       throw new Error(
         `Your setting "${renderPath(info)}" failed validation with value ${inspect(
           resolvedValue
-        )}:\n\n- ${maybeViolation.messages.join('\n- ')}`
+        )}:\n\n- ${maybeViolation.reasons.join('\n- ')}`
       )
     }
   }
