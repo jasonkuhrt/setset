@@ -1,6 +1,6 @@
 {
   "name": "setset",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "dist/index.js",
   "repository": "git@github.com:prisma-labs/project-lib-typescript.git",
   "author": "Jason Kuhrt",
