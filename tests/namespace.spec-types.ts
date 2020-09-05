@@ -12,6 +12,12 @@ S.create<{ a: { b: number } }>({ fields: { a: { fields:{ b: {} } } } })
 S.create<{ a: { b: number } }>({ fields: { a: { fields:{ b: {} } } } }).change({a: { b: 1 } })
 
 /**
+ * metadata
+ */
+const md1 = S.create<{ a: { b: number } }>(NA).metadata.fields.a.fields.b
+tst.assertTrue<tst.Equals<S.MetadataLeaf<number>, typeof md1>>()
+
+/**
  * shorthands
  */
 

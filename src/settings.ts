@@ -14,23 +14,23 @@ const log = Logger.log.child('setset')
  * Metadata
  */
 
-type MetadataValueFromType = 'change' | 'initial'
+export type MetadataValueFromType = 'change' | 'initial'
 
 /**
  *
  */
-export type MetadataState<Data> = {
+export type MetadataNamespace<Data = any> = {
   type: 'namespace'
   fields: {
     [Key in keyof Data]: IsRecord<Data[Key]> extends true
-      ? MetadataRecord<MetadataState<Lookup<Data[Key], string>>>
+      ? MetadataRecord<MetadataNamespace<Lookup<Data[Key], string>>>
       : Data[Key] extends PlainObject
       ? MetadataNamespace<Data[Key]>
       : MetadataLeaf<Data[Key]>
   }
 }
 
-type MetadataLeaf<V = any> = {
+export type MetadataLeaf<V = any> = {
   type: 'leaf'
   value: V
   initial: V
@@ -42,11 +42,6 @@ type MetadataRecord<V = Metadata> = {
   from: MetadataValueFromType
   value: Record<string, V>
   initial: Record<string, V>
-}
-
-type MetadataNamespace<V = Metadata> = {
-  type: 'namespace'
-  fields: Record<string, V>
 }
 
 type Metadata<V = any> = MetadataLeaf<V> | MetadataRecord<V> | MetadataNamespace<V>
@@ -83,11 +78,11 @@ function metadataFromData(specifier: Specifier, data: any): Metadata {
   return createMetadataLeaf(data)
 }
 
-function metadataNamespaceFromData(specifier: SpecifierNamespace, data: PlainObject) {
+function metadataNamespaceFromData(specifier: SpecifierNamespace, data: PlainObject): MetadataNamespace {
   return Lo.chain(data)
     .entries()
     .reduce((md, [k, v]) => {
-      md.fields[k] = metadataFromData(specifier.fields[k], v)
+      md.fields[k] = metadataFromData(specifier.fields[k], v) as any
       return md
     }, createMetadataNamespace())
     .value()
@@ -331,7 +326,7 @@ export function normalize(
         specifier,
         inputFieldValue as Record<string, PlainObject>, // todo don't assume namespace-record
         data[inputFieldName],
-        metadata.fields[inputFieldName] as MetadataRecord<MetadataNamespace>, // todo don't assume namespace-record
+        (metadata.fields[inputFieldName] as any) as MetadataRecord<MetadataNamespace>, // todo don't assume namespace-record
         appendPath(info, inputFieldName)
       )
       return newData

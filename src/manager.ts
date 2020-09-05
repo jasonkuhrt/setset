@@ -1,6 +1,6 @@
 import * as Logger from '@nexus/logger'
 import { forEach, values } from 'lodash'
-import { InferDataFromInput, MetadataState } from '.'
+import { InferDataFromInput, MetadataNamespace } from '.'
 import {
   commitNamespace,
   createInfo,
@@ -24,7 +24,7 @@ export type Manager<Input extends PlainObject, Data extends PlainObject> = {
   reset(): Manager<Input, Data>
   change(input: UserInput<Input>): Manager<Input, Data>
   original(): Data
-  metadata: MetadataState<Data>
+  metadata: MetadataNamespace<Data>
   data: Data
 }
 

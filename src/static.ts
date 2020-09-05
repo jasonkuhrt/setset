@@ -18,7 +18,7 @@ import {
 } from './utils'
 
 // todo implement context
-type BaseContext = { path: string[] }
+type BaseMapContext = { path: string[] }
 
 export type Spec<Input, Data> = NamespaceSpec<Input, Data, {}>
 
@@ -136,7 +136,7 @@ type OnlyNamespace<T> = T extends Function
 type OnlyShorthand<T> = UnwrapSyntheticLeaf<ExcludeUndefined<Exclude<T, OnlyNamespace<T>>>>
 
 //prettier-ignore
-export type NamespaceSpec<Input, Data, LocalContext> =
+export type NamespaceSpec<Input, Data, LocalMapContext> =
   {
     fields: NamespaceFields<ExcludeShorthand<Input>, Data>
   } &
@@ -150,7 +150,7 @@ export type NamespaceSpec<Input, Data, LocalContext> =
     : IsNamespaceInputEqualData<Input, Data> extends true
     // ? { i: Input, d: Data, eq: IsNamespaceInputEqualData<Input, Data> }
     ? {} 
-    : { map(normalizedInput: NormalizeNamespaceInput<Input, ExcludeUndefined<Data>>, context: BaseContext & LocalContext): GetNamespaceDataWhereDivergingFromInput<Input, Data> }
+    : { map(normalizedInput: NormalizeNamespaceInput<Input, ExcludeUndefined<Data>>, context: BaseMapContext & LocalMapContext): GetNamespaceDataWhereDivergingFromInput<Input, Data> }
   ) &
   /**
    * If namespace is union with non-pojo type then shorthand required 
