@@ -11,18 +11,19 @@ Powerful Incremental Type-driven Settings Engine.
 - [Installation](#installation)
 - [Overview](#overview)
 - [Guide](#guide)
-  - [About Leaves, Namespaces & Records](#about-leaves-namespaces--records)
-  - [Input vs Data](#input-vs-data)
-  - [Package Exports Overview](#package-exports-overview)
+  - [Conceptual Introduction: Leaves, Namespaces & Records](#conceptual-introduction-leaves-namespaces--records)
+  - [Conceptual Introduction: Input vs Data](#conceptual-introduction-input-vs-data)
+  - [API Overview: Package Exports](#api-overview-package-exports)
     - [create](#create)
     - [InferDataFromInput](#inferdatafrominput)
     - [Leaf](#leaf)
-  - [API `Setset` Instance Overview](#api-setset-instance-overview)
+  - [API Overview: `Setset` Instance](#api-overview-setset-instance)
     - [.data](#data)
     - [.change()](#change)
     - [.reset()](#reset)
     - [.metadata](#metadata)
     - [.original](#original)
+    - [About Wrapping](#about-wrapping)
   - [Working With Leaves](#working-with-leaves)
     - [Synthetic Leaves](#synthetic-leaves)
     - [Initializers](#initializers)
@@ -39,15 +40,25 @@ Powerful Incremental Type-driven Settings Engine.
     - [Metadata](#metadata)
   - [Reciepes](#reciepes)
     - [One-Off Config](#one-off-config)
+  - [FAQ](#faq)
+    - [Why do I need to supply an empty field configuration for required settings to make Setset type check?](#why-do-i-need-to-supply-an-empty-field-configuration-for-required-settings-to-make-setset-type-check)
 - [Roadmap](#roadmap)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+<br/>
+<br/>
+
 ## Installation
 
 ```
-npm add setset 
+npm add setset
 ```
+
+Also, ensure that [`strict`](https://www.typescriptlang.org/tsconfig#strict) mode compiler option is enabled in your [`tsconfig.json`](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html). Without it the type-safe implementation benefits offered by Setset will be lost!
+
+<br/>
+<br/>
 
 ## Overview
 
@@ -69,10 +80,16 @@ Setset is designed with the following workflow in mind:
    ```ts
    type Input = {
      /**
-      * Documentation for this setting... (and assume the rest have docs too!)
+      * Foo bar qux ...
       */
      foo?: number
+     /**
+      * Abba rabba kadabba ...
+      */
      bar?: string
+     /**
+      *  Toto robo mobo ...
+      */
      qux?:
        | boolean
        | {
@@ -123,28 +140,29 @@ Setset is designed with the following workflow in mind:
    ```
 
 <br/>
+<br/>
 
 ## Guide
 
-Setset has three categories of settings: leaf, namespace, and record.
+### Conceptual Introduction: Leaves, Namespaces & Records
 
-### About Leaves, Namespaces & Records
+Setset has three categories of settings: leaf, namespace, and record.
 
 Leaf settings are terminal points in your settings. When a leaf is changed it overwrites whatever the value was previously.
 
 Namespace settings contain additional settings. Namespaces are useful to provide logical grouping to help users navigate and understand your settings. As you would expect changes to namespaced fields _merge_ with the previous state of the namespace.
 
-Record settings look similar to namespace settings but there are two differences. First, instead of _fields_ we say it has _keys_ and _keys_ are dynamic because they are semantically part of the data. Second, values are of a single type. We refer to a pair of key and value as an _entry_. Records are useful as an alternative to arrays when keying by one of the member properties makes sense. Doing so enforces uniqueness and allows your users to take advantage of the incremental change API (chagnes to entries merge with previous entry state, if any).
+Record settings look similar to namespace settings but there are two differences. First, instead of _fields_ we say it has _keys_ and _keys_ are dynamic because they are semantically part of the data. Second, values are of a single type. We refer to a pair of key and value as an _entry_. Records are useful as an alternative to arrays when keying by one of the member properties makes sense. Doing so enforces uniqueness and allows your users to take advantage of the incremental change API (changes to entries merge with previous entry state, if any).
 
-### Input vs Data
+### Conceptual Introduction: Input vs Data
 
 Setset makes a distinction between settings _input_ and settings _data_. Input is what users give but data is what is stored. Usually settings input is not 1:1 with the data. Here are some reasons:
 
 1. _Generally_ you should want your input to be optional (zero config philosophy) but your data to be required (avoid scattering fallbacks across codebase). For example an optional setting that falls back to a default if the user doesn't give a value. The input is optional but the data is guaranteed to have either the user input or the default.
 2. You want to be able to pass shorthands to namespaces. For example a boolean to toggle a feature quickly, but an object to configure it deeply if needed. The data only contains the object representation. The shorthand only lives at the input level.
-3. You want to expose some settings that map to another tool in a different way than that tools represents them. Maybe you want to hardcode some of the tools' settings. Or maybe you want an abstract the tool's settings altogether. These are data mapping problems and you could certainly solve them in a different part of your codebase, but Setset can encapsulate this concern for you _if/when you want_.
+3. You want to expose the settings of an underlying tool but represented somehow differently. In other words you want some settings that will be internally transformed (aka. mapped) into a shape (aka. type) accepted by an underlying tool. Setset's input/data separation makes it easy for you to implement such mapping logic right in your settings layer. Of course you don't have to if it doesn't make sense for your use-case.
 
-The difference between input and data is modeled via type generics on the `Setset.create` constructor.
+The separation between input and data is modeled via type generics on the `Setset.create` constructor.
 
 ```ts
 type Input = { a?: string }
@@ -170,7 +188,15 @@ const settings = Setset.create<Input, Data>(...)
 
 Intersection types have some limitations. For example they cannot turn required properties into optional ones. Look to libraries like [`type-fest`](https://github.com/sindresorhus/type-fest) or the builtin utility types `Pick` `Omit` etc. to slice and dice as you need in combination with `InferDataFromInput`.
 
-### Package Exports Overview
+<br/>
+
+### API Overview: Package Exports
+
+```
+create
+InferDataFromInput
+Leaf
+```
 
 #### create
 
@@ -193,7 +219,21 @@ See guide section on Input vs Data.
 
 See guide section on leaves.
 
-### API `Setset` Instance Overview
+<br/>
+
+### API Overview: `Setset` Instance
+
+The Setset instance has a handful of methods and properties and is generally what your users will encounter directly or indirectly (see section on API wrapping).
+
+These are the properties and methods at a glance. The following sub-sections go into more detail.
+
+```
+.data
+.metadata
+.original
+.change()
+.reset()
+```
 
 #### .data
 
@@ -248,6 +288,30 @@ settings.metadata // { type: "leaf", value: 1, from: 'change', initial: 0 }
 #### .original
 
 The `.original` property contains a representation of the `.data` as it was just after the instance was first constructed. This is a convenience property derived from the more complex `.metadata` property.
+
+#### About Wrapping
+
+In your use-case your users might not need the full power of Setset and thus you might choose to only expose a subset of the API. This is completely valid. For example:
+
+```ts
+import * as Setset from 'setset'
+
+export type Settings = {
+  // ...
+}
+
+export function createMyThing() {
+  const settingsManager = Setset.create<Settings>({})
+  // ...
+
+  return {
+    changeSettings: settingsManager.change,
+    // ...
+  }
+}
+```
+
+<br/>
 
 ### Working With Leaves
 
@@ -433,6 +497,8 @@ Note that initialize is not run here because initializers do not run through fix
 1. Change
 2. Fixup
 3. Validate
+
+<br/>
 
 ### Working With Namespaces
 
@@ -723,6 +789,8 @@ The mapping system works as follows:
 2. Shorthand
 3. Mapper
 
+<br/>
+
 ### Working With Records
 
 #### Initializers
@@ -793,6 +861,29 @@ class {
 }
 ```
 
+### FAQ
+
+#### Why do I need to supply an empty field configuration for required settings to make Setset type check?
+
+You might have a required setting and be happy to stick with the defaults. You might then notice and be confused by the fact that Setset still requires you to pass an empty configuration object for the setting, like so:
+
+```ts
+import * as Setset from 'setset'
+
+type Settings = {
+  foo: string
+}
+
+const settings = Setset.create<Settings>({
+  fields: {
+    foo: {}, // <-- why is this needed??
+  },
+})
+```
+
+TODO explain this
+
+<br/>
 <br/>
 
 ## Roadmap
