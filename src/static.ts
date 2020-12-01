@@ -105,12 +105,15 @@ type IsNamespaceInputFieldEqualDataField<InputField, DataField> = IsEqual<
 export type OmitNamespaceKeys<T> = {
   [K in keyof T]: IsRecord<ExcludeUndefined<T[K]>> extends true
     ? never
-    : HasNamespace<ExcludeUndefined<T[K]>> extends true
+    : IsOrUnionHasNamespace<ExcludeUndefined<T[K]>> extends true
     ? never
     : T[K]
 }
 
-type HasNamespace<T> = OnlyNamespace<T> extends never ? false : true
+/**
+ * Check if a type is (or union has) a namespace.
+ */
+type IsOrUnionHasNamespace<T> = OnlyNamespace<T> extends never ? false : true
 
 export type IsNamespaceInputEqualData<Input, Data> = IsEqual<
   Required<OmitNamespaceKeys<UnwrapSyntheticLeavesDeeply<ExcludeShorthand<Input>>>>,
@@ -294,14 +297,16 @@ export type Shorthand<Input = Primitive, Return = PlainObject> = (input: Input) 
 
 export type Leaf<T = any> = { __settingKind: 'Leaf'; type: T }
 
-export type AlreadyNativeTypeError = 'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.'
+export type AlreadyNativeLeafTypeError = 'Error: You wrapped Leaf<> around this field type but Setset already considers it a leaf.'
 
 export type NativeLeaf = Primitive | Date | RegExp
 
 export type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = false> = {
   [K in keyof T]: T[K] extends Leaf
     ? UnwrapSyntheticLeaf<T[K], CheckUselessWraps>
-    : HasNamespace<T[K]> extends true
+    : IsOrUnionHasNamespace<T[K]> extends true
+    ? UnwrapSyntheticLeavesDeeply<T[K]>
+    : IsRecord<T[K]> extends true
     ? UnwrapSyntheticLeavesDeeply<T[K]>
     : T[K]
 }
@@ -309,7 +314,7 @@ export type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = f
 export type UnwrapSyntheticLeaf<T, CheckUselessWraps extends boolean = false> = T extends Leaf
   ? CheckUselessWraps extends true
     ? T['type'] extends NativeLeaf
-      ? AlreadyNativeTypeError
+      ? AlreadyNativeLeafTypeError
       : T['type']
     : T['type']
   : T
