@@ -306,7 +306,7 @@ export type UnwrapSyntheticLeavesDeeply<T, CheckUselessWraps extends boolean = f
     ? UnwrapSyntheticLeaf<T[K], CheckUselessWraps>
     : IsOrUnionHasNamespace<T[K]> extends true
     ? UnwrapSyntheticLeavesDeeply<T[K]>
-    : IsRecord<T[K]> extends true
+    : IsRecord<ExcludeUndefined<T[K]>> extends true
     ? UnwrapSyntheticLeavesDeeply<T[K]>
     : T[K]
 }
