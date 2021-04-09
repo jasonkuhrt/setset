@@ -50,6 +50,7 @@
     "@jsdevtools/ono": "^7.1.3",
     "@nexus/logger": "^0.2.0",
     "lodash": "^4.17.20",
+    "tslib": "^2.2.0",
     "type-fest": "^0.20.0"
   }
 }
