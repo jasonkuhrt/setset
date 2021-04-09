@@ -51,6 +51,6 @@
     "@nexus/logger": "^0.2.0",
     "lodash": "^4.17.20",
     "tslib": "^2.2.0",
-    "type-fest": "^0.20.0"
+    "type-fest": "^0.21.0"
   }
 }
