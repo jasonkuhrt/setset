@@ -1,4 +1,4 @@
-import { log } from '@nexus/logger'
+import { log } from 'floggy'
 import * as S from '../src'
 import { c } from './__helpers'
 
@@ -278,7 +278,7 @@ describe('validate()', () => {
       throw new Error('Unexpected error while trying to validate')
     })
     const s = S.create<{ a: string }>({ fields: { a: { validate } } })
-    let e
+    let e: any
     try {
       s.change({ a: 'bar' })
     } catch (e_) {

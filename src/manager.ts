@@ -1,4 +1,4 @@
-import * as Logger from '@nexus/logger'
+import * as Logger from 'floggy'
 import { forEach, values } from 'lodash'
 import { InferDataFromInput, MetadataNamespace } from '.'
 import {

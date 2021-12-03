@@ -38,8 +38,22 @@ Array [
 exports[`fixup() when onFixup handler is set it can call the original handler to retain the original base behaviour 1`] = `
 Array [
   Array [
-    "{\\"event\\":\\"One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.\\",\\"level\\":4,\\"path\\":[\\"setset\\"],\\"context\\":{\\"before\\":\\"foo\\",\\"after\\":\\"fixed\\",\\"path\\":\\"a\\",\\"messages\\":[\\"...\\"]}}
-",
+    Object {
+      "context": Object {
+        "after": "fixed",
+        "before": "foo",
+        "messages": Array [
+          "...",
+        ],
+        "path": "a",
+      },
+      "event": "One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.",
+      "level": 4,
+      "path": Array [
+        "setset",
+      ],
+    },
+    [Function],
   ],
 ]
 `;
@@ -65,8 +79,22 @@ exports[`fixup() when onFixup handler not set and no messages provided then defa
 exports[`fixup() when onFixup handler not set then defualt is to log a warning 1`] = `
 Array [
   Array [
-    "{\\"event\\":\\"One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.\\",\\"level\\":4,\\"path\\":[\\"setset\\"],\\"context\\":{\\"before\\":\\"foo\\",\\"after\\":\\"fixed\\",\\"path\\":\\"a\\",\\"messages\\":[\\"...\\"]}}
-",
+    Object {
+      "context": Object {
+        "after": "fixed",
+        "before": "foo",
+        "messages": Array [
+          "...",
+        ],
+        "path": "a",
+      },
+      "event": "One of your setting values was invalid. We were able to automaticlaly fix it up now but please update your code.",
+      "level": 4,
+      "path": Array [
+        "setset",
+      ],
+    },
+    [Function],
   ],
 ]
 `;

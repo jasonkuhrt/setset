@@ -1,5 +1,5 @@
 import ono from '@jsdevtools/ono'
-import * as Logger from '@nexus/logger'
+import * as Logger from 'floggy'
 import * as Lo from 'lodash'
 import { last } from 'lodash'
 import { Primitive } from 'type-fest'
@@ -119,7 +119,8 @@ function normalizeNamespace(
     log.trace('expanding shorthand', { info })
     try {
       longhandValue = specifier.shorthand(input as Primitive)
-    } catch (e) {
+    } catch (error) {
+      const e = error instanceof Error ? error : new Error(String(error))
       throw ono(
         e,
         { info, input },
@@ -197,11 +198,12 @@ function onFixup(info: FixupInfo): void {
 function runFixup(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo) {
   if (!specifier.fixup) return input
 
-  let maybeFixedup
+  let maybeFixedUp
 
   try {
-    maybeFixedup = specifier.fixup(input)
-  } catch (e) {
+    maybeFixedUp = specifier.fixup(input)
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error))
     throw ono(
       e,
       { info, value: input },
@@ -209,25 +211,26 @@ function runFixup(options: Options, specifier: SpecifierLeaf, input: any, info: 
     )
   }
 
-  if (maybeFixedup) {
+  if (maybeFixedUp) {
     const fixupInfo = {
       before: input,
-      after: maybeFixedup.value,
+      after: maybeFixedUp.value,
       path: renderPath(info),
-      messages: maybeFixedup.messages,
+      messages: maybeFixedUp.messages,
     }
     if (options.onFixup) {
       try {
         options.onFixup(fixupInfo, onFixup)
-      } catch (e) {
+      } catch (error) {
+        const e = error instanceof Error ? error : new Error(String(error))
         throw ono(e, { info }, `onFixup callback for "${renderPath(info)}" failed`)
       }
-    } else if (maybeFixedup.messages) {
+    } else if (maybeFixedUp.messages) {
       onFixup(fixupInfo)
     }
   }
 
-  return maybeFixedup?.value ?? input
+  return maybeFixedUp?.value ?? input
 }
 
 function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, info: TraversalInfo): any {
@@ -240,7 +243,8 @@ function normalizeLeaf(options: Options, specifier: SpecifierLeaf, input: any, i
     let maybeViolation
     try {
       maybeViolation = specifier.validate(resolvedValue)
-    } catch (e) {
+    } catch (error) {
+      const e = error instanceof Error ? error : new Error(String(error))
       throw ono(
         e,
         { info, value: resolvedValue },
@@ -679,7 +683,8 @@ function runMapper(specifier: SpecifierNamespace, input: any, data: any, info: T
   let mapResult
   try {
     mapResult = specifier.map(input, mapInfo)
-  } catch (e) {
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error))
     // prettier-ignore
     const message = `There was an unexpected error while running the mapper for setting input "${renderPath(info)}"`
     throw ono(e, { info: mapInfo, input }, message)
@@ -699,7 +704,8 @@ function runTypeMapper(specifier: any, inputFieldValue: any, info: TraversalInfo
   log.trace('running type mapper', { info, inputFieldValue })
   try {
     return specifier.mapType(inputFieldValue)
-  } catch (e) {
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error))
     throw ono(
       e,
       { info },
@@ -721,7 +727,8 @@ function runInitializer(specifier: any, info: TraversalInfo): any {
     log.trace('running initializer', { info })
     try {
       return specifier.initial()
-    } catch (e) {
+    } catch (error) {
+      const e = error instanceof Error ? error : new Error(String(error))
       throw ono(
         e,
         { info },
