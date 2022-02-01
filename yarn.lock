@@ -1238,14 +1238,6 @@ chalk@^4.0.0, chalk@^4.1.0:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chalk@^4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.2.tgz#aac4e2b7734a740867aeb16bf02aad556a1e7a01"
-  integrity sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==
-  dependencies:
-    ansi-styles "^4.1.0"
-    supports-color "^7.1.0"
-
 char-regex@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/char-regex/-/char-regex-1.0.2.tgz#d744358226217f981ed58f479b1d6bcc29545dcf"
@@ -1908,15 +1900,16 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-floggy@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/floggy/-/floggy-0.3.1.tgz#bc009cc54623c655a7911a38d7c2155b0fe18d79"
-  integrity sha512-qNvfLv+wAvzLEG3KemsbrXZDxOq0hx83+NuzVXkFMpIP/Qh2DHK5Qr2kdQL/j7P8+GkHP0JQcGnvnPZLQE2B1w==
+floggy@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/floggy/-/floggy-0.3.2.tgz#0dd48da83405e532a109634872722265453dfa51"
+  integrity sha512-GHQm779y9N4CnPKSwOaGRRmG82u+7oLePvXB2kdr6H8yz0viveDJUm+go3yNaFgNQri4JVfUimxQjfrH48zf7w==
   dependencies:
-    chalk "^4.1.2"
     fp-ts "^2.11.3"
+    kleur "^4.1.4"
     lodash "^4.17.21"
     strip-ansi "6"
+    tslib "^2.3.1"
 
 for-in@^1.0.2:
   version "1.0.2"
@@ -3037,6 +3030,11 @@ kleur@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.3.tgz#a79c9ecc86ee1ce3fa6206d1216c501f147fc07e"
   integrity sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==
+
+kleur@^4.1.4:
+  version "4.1.4"
+  resolved "https://registry.yarnpkg.com/kleur/-/kleur-4.1.4.tgz#8c202987d7e577766d039a8cd461934c01cda04d"
+  integrity sha512-8QADVssbrFjivHWQU7KkMgptGTl6WAcSdlbBPY4uNF+mWr6DGcKrvY2w4FQJoXch7+fKMjj0dRrL75vk3k23OA==
 
 leven@^3.1.0:
   version "3.1.0"
@@ -4365,6 +4363,11 @@ tslib@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.2.0.tgz#fb2c475977e35e241311ede2693cee1ec6698f5c"
   integrity sha512-gS9GVHRU+RGn5KQM2rllAlR3dU6m7AcpJKdtH8gFvQiC4Otgk98XnmMU+nZenHt/+VhnBPWwgrJsyrdcw6i23w==
+
+tslib@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
+  integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
